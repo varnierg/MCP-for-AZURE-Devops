@@ -156,6 +156,23 @@ export function getCredentialsForProject(
   projectPath?: string,
   orgName?: string
 ): { organization: string; project: string; username: string; pat: string } | null {
+  // Check environment variables first
+  const envOrg = process.env.AZURE_DEVOPS_ORG || process.env.AZURE_DEVOPS_ORGANIZATION;
+  const envUsername = process.env.AZURE_DEVOPS_USERNAME;
+  const envPat = process.env.AZURE_DEVOPS_PAT || process.env.AZURE_DEVOPS_TOKEN;
+  const envProject = process.env.AZURE_DEVOPS_PROJECT;
+
+  if (envOrg && envUsername && envPat) {
+    if (!orgName || orgName.toLowerCase() === envOrg.toLowerCase()) {
+      return {
+        organization: orgName || envOrg,
+        project: projectPath || envProject || '',
+        username: envUsername,
+        pat: envPat
+      };
+    }
+  }
+
   const config = loadConfig();
   if (!config) {
     return null;

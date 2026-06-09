@@ -21,15 +21,10 @@ const server = new Server(
   }
 );
 
-// Trigger session background update check for default organization
-const config = loadConfig();
-if (config && config.defaultProject) {
-  const parts = config.defaultProject.split('/');
-  const defaultOrg = parts[0];
-  const creds = getCredentialsForProject(undefined, defaultOrg);
-  if (creds) {
-    checkAndUpdateDatabase(creds.organization, creds.pat).catch(() => {});
-  }
+// Trigger session background update check for default organization/env credentials
+const creds = getCredentialsForProject();
+if (creds) {
+  checkAndUpdateDatabase(creds.organization, creds.pat).catch(() => {});
 }
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
