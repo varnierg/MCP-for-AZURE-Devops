@@ -1,0 +1,3 @@
+node_modules/
+dist/
+.azure-devops-config.enc

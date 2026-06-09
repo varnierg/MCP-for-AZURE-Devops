@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "resolveJsonModule": true,
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "typeRoots": [
+      "C:/Users/username/AppData/Roaming/npm/node_modules/@types"
+    ],
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "@modelcontextprotocol/sdk/*.js": [
+        "C:/Users/username/AppData/Roaming/npm/node_modules/@modelcontextprotocol/sdk/dist/esm/*"
+      ],
+      "@modelcontextprotocol/sdk/*": [
+        "C:/Users/username/AppData/Roaming/npm/node_modules/@modelcontextprotocol/sdk/dist/esm/*"
+      ],
+      "*": [
+        "*",
+        "C:/Users/username/AppData/Roaming/npm/node_modules/*"
+      ]
+    }
+  },
+  "include": ["src/**/*"]
+}
