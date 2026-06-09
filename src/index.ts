@@ -1,4 +1,3 @@
-// Author Varnier Gatto and Gemini, e-mail: mcp_dev@jitime.com
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {

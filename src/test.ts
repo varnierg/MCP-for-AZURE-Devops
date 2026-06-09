@@ -1,4 +1,3 @@
-// Author Varnier Gatto and Gemini, e-mail: mcp_dev@jitime.com
 import { parseProjectUrl, addProjectConfig, getCredentialsForProject, loadConfig } from './config';
 import { encrypt, decrypt, getEncryptionKey, generateAndSaveKey } from './crypto';
 import { searchLocalDatabase } from './docs/updater';

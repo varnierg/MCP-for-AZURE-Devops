@@ -1,4 +1,3 @@
-// Author Varnier Gatto and Gemini, e-mail: mcp_dev@jitime.com
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 
 export class DevOpsClient {

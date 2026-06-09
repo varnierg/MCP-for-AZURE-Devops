@@ -7,7 +7,6 @@
 <a name="english"></a>
 ## English Version
 
-**Author:** Varnier Gatto (mcp_dev@jitime.com)
 
 
 This is a **Model Context Protocol (MCP)** server that enables AI assistants (such as Claude Desktop, Antigravity, etc.) to interact directly with **Azure DevOps**.
@@ -149,7 +148,6 @@ npm run test
 <a name="italiano"></a>
 ## Versione Italiana
 
-**Autore:** Varnier Gatto (mcp_dev@jitime.com)
 
 
 Questo è un server **Model Context Protocol (MCP)** che consente ai modelli di intelligenza artificiale (come Claude Desktop, Antigravity, ecc.) di interagire direttamente con **Azure DevOps**.
