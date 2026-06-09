@@ -1,3 +1,4 @@
 node_modules/
 dist/
 .azure-devops-config.enc
+work_items_report.xlsx

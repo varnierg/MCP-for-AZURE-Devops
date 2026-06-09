@@ -10,7 +10,6 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "resolveJsonModule": true,
-    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "typeRoots": [
       "C:/Users/username/AppData/Roaming/npm/node_modules/@types"
