@@ -143,6 +143,16 @@ npm run test
 > [!IMPORTANT]
 > The test suite in `src/test.ts` uses the placeholder organization `my-org`. Before running tests, you should substitute occurrences of `my-org` in `src/test.ts` with your actual Azure DevOps organization name, or the mock URL parser and configuration store tests will fail.
 
+#### Setting up a Test Environment / Creating Test Data
+To test the Azure DevOps MCP tools (Work Items, Git, Pipelines, and Identities), you can set up a dedicated sandbox environment:
+1. **Create a Test Organization**: Go to [dev.azure.com](https://dev.azure.com) and create a free personal organization (e.g., `my-sandbox-org`).
+2. **Create a Test Project**: Within your organization, create a new private project (e.g., `TestProject`).
+3. **Populate Test Data**:
+   - **Git Repository**: Initialize the default repository with a `main` branch and add a few sample files (e.g., `README.md`, `index.html`) to test the Git tools.
+   - **Work Items**: Create a couple of sample Work Items (e.g., a Bug with title "Test Bug" and a Task with title "Test Task") to test WIT tools.
+   - **Pipelines**: Create a basic pipeline (e.g., using a simple starter YAML template) to test pipeline runs and log retrieval.
+   - **Identities**: Add at least one other user or group in your project settings to test identity search.
+
 ---
 ---
 
@@ -284,3 +294,13 @@ npm run test
 
 > [!IMPORTANT]
 > La suite di test in `src/test.ts` utilizza l'organizzazione fittizia `my-org`. Prima di eseguire i test, è necessario sostituire le occorrenze di `my-org` in `src/test.ts` con il nome reale della tua organizzazione Azure DevOps, altrimenti i test del parser URL e del configuration store falliranno.
+
+#### Configurazione dell'Ambiente di Test / Creazione dei Dati di Test
+Per testare gli strumenti MCP di Azure DevOps (Work Item, Git, Pipeline e Identità), puoi configurare un ambiente sandbox dedicato:
+1. **Creare un'Organizzazione di Test**: Accedi a [dev.azure.com](https://dev.azure.com) e crea un'organizzazione personale gratuita (es. `my-sandbox-org`).
+2. **Creare un Progetto di Test**: All'interno dell'organizzazione, crea un nuovo progetto privato (es. `TestProject`).
+3. **Popolare i Dati di Test**:
+   - **Repository Git**: Inizializza il repository predefinito con un ramo `main` e aggiungi alcuni file di esempio (es. `README.md`, `index.html`) per testare gli strumenti Git.
+   - **Work Items**: Crea un paio di Work Item di esempio (es. un Bug intitolato "Test Bug" e un Task intitolato "Test Task") per testare la visualizzazione e modifica dei task.
+   - **Pipeline**: Configura una pipeline di base (es. usando un semplice template YAML "Starter pipeline") per testare l'avvio delle pipeline e il recupero dei log.
+   - **Identità**: Aggiungi almeno un altro utente o gruppo nelle impostazioni del progetto per testare lo strumento di ricerca identità.
