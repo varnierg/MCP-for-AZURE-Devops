@@ -1,3 +1,4 @@
+// Author Varnier Gatto and Gemini, e-mail: mcp_dev@jitime.com
 import * as readline from 'readline';
 import { addProjectConfig, loadConfig, getCredentialsForProject } from './config';
 import { DevOpsClient } from './devops';

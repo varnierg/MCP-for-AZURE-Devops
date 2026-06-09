@@ -1,3 +1,4 @@
+// Author Varnier Gatto and Gemini, e-mail: mcp_dev@jitime.com
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
