@@ -40,14 +40,24 @@ async function runSetup() {
 
     // Check if organization already exists in configuration
     const existingConfig = loadConfig();
-    const existingOrg = existingConfig?.organizations[organization];
+    let existingOrg = existingConfig?.organizations[organization];
+    let matchingOrgKey = organization;
+    if (!existingOrg && existingConfig) {
+      const matchingKey = Object.keys(existingConfig.organizations).find(
+        k => k.toLowerCase() === organization.toLowerCase()
+      );
+      if (matchingKey) {
+        existingOrg = existingConfig.organizations[matchingKey];
+        matchingOrgKey = matchingKey;
+      }
+    }
     
     let username = '';
     let pat = '';
     let shouldPromptCredentials = true;
 
     if (existingOrg) {
-      console.log(`\nFound existing credentials for organization "${organization}" (User: ${existingOrg.username})`);
+      console.log(`\nFound existing credentials for organization "${matchingOrgKey}" (User: ${existingOrg.username})`);
       const reuseAnswer = await ask('Do you want to reuse these credentials? (y/n):\n> ');
       
       if (reuseAnswer.trim().toLowerCase() === 'y' || reuseAnswer.trim().toLowerCase() === 'yes') {

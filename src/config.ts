@@ -196,9 +196,18 @@ export function getCredentialsForProject(
     return null;
   }
 
-  const orgConfig = config.organizations[organization];
+  let orgConfig = config.organizations[organization];
   if (!orgConfig) {
-    return null;
+    const targetOrg = organization.toLowerCase();
+    const matchingKey = Object.keys(config.organizations).find(
+      k => k.toLowerCase() === targetOrg
+    );
+    if (matchingKey) {
+      orgConfig = config.organizations[matchingKey];
+      organization = matchingKey;
+    } else {
+      return null;
+    }
   }
 
   return {
