@@ -1,6 +1,7 @@
 // Author Varnier Gatto and Gemini, e-mail: mcp_dev@jitime.com
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -8,6 +9,8 @@ import {
 import { getCredentialsForProject, addProjectConfig, loadConfig } from './config';
 import { DevOpsClient } from './devops';
 import { checkAndUpdateDatabase, searchLocalDatabase, fetchSingleApiInfoOnline } from './docs/updater';
+import * as http from 'http';
+import * as url from 'url';
 
 // Global error handlers to capture and log any hidden startup exceptions
 process.on('uncaughtException', (err) => {
@@ -628,9 +631,78 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 });
 
 async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error('[Azure DevOps MCP Server] Server running on stdio transport.');
+  if (process.env.PORT) {
+    const port = parseInt(process.env.PORT, 10);
+    const transports = new Map<string, SSEServerTransport>();
+
+    const httpServer = http.createServer(async (req, res) => {
+      const parsedUrl = url.parse(req.url || '', true);
+      const pathname = parsedUrl.pathname;
+
+      // Establish SSE connection
+      if (req.method === 'GET' && (pathname === '/sse' || (pathname === '/' && req.headers.accept === 'text/event-stream'))) {
+        const transport = new SSEServerTransport('/messages', res);
+        transports.set(transport.sessionId, transport);
+        
+        res.on('close', () => {
+          transports.delete(transport.sessionId);
+        });
+
+        await server.connect(transport);
+        return;
+      }
+
+      // Handle client incoming messages
+      if (req.method === 'POST' && pathname === '/messages') {
+        const sessionId = parsedUrl.query.sessionId as string;
+        if (!sessionId) {
+          res.writeHead(400, { 'Content-Type': 'text/plain' });
+          res.end('Missing sessionId parameter');
+          return;
+        }
+
+        const transport = transports.get(sessionId);
+        if (!transport) {
+          res.writeHead(404, { 'Content-Type': 'text/plain' });
+          res.end('Session not found');
+          return;
+        }
+
+        let bodyStr = '';
+        req.on('data', chunk => {
+          bodyStr += chunk;
+        });
+        req.on('end', async () => {
+          try {
+            const body = JSON.parse(bodyStr);
+            await transport.handlePostMessage(req, res, body);
+          } catch (err: any) {
+            res.writeHead(400, { 'Content-Type': 'text/plain' });
+            res.end(`Invalid JSON body: ${err.message}`);
+          }
+        });
+        return;
+      }
+
+      // Simple health check
+      if (req.method === 'GET' && (pathname === '/' || pathname === '/health')) {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('OK');
+        return;
+      }
+
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not Found');
+    });
+
+    httpServer.listen(port, () => {
+      console.error(`[Azure DevOps MCP Server] Server running on SSE transport listening on port ${port}.`);
+    });
+  } else {
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+    console.error('[Azure DevOps MCP Server] Server running on stdio transport.');
+  }
 }
 
 main().catch(err => {
