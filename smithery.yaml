@@ -24,7 +24,7 @@ commandFunction: |-
     const c = config || {};
     return {
       command: 'node',
-      args: ['dist/index.js'],
+      args: ['/app/dist/index.js'],
       env: {
         AZURE_DEVOPS_ORG: c.organization || '',
         AZURE_DEVOPS_USERNAME: c.username || '',

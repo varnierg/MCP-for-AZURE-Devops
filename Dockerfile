@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:18-slim AS builder
 
 WORKDIR /app
 
@@ -17,19 +17,15 @@ COPY copy-assets.js bundle.js ./
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine
+FROM node:18-slim
 
 WORKDIR /app
 
 # Copy only the compiled bundle and assets from the builder stage
 COPY --from=builder /app/dist ./dist
-COPY package*.json ./
-
-# Install only production dependencies (axios, dotenv, mcp sdk, etc.)
-RUN npm ci --omit=dev
 
 # Set Node production environment
 ENV NODE_ENV=production
 
-# Run the bundled application
-ENTRYPOINT ["node", "dist/index.js"]
+# Run the bundled application using the absolute path
+ENTRYPOINT ["node", "/app/dist/index.js"]
