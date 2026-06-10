@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "type": "commonjs",
   "scripts": {
-    "build": "tsc",
-    "prepare": "tsc",
+    "build": "tsc && node copy-assets.js",
+    "prepare": "tsc && node copy-assets.js",
     "start": "node dist/index.js",
     "setup": "ts-node src/setup.ts",
     "test": "ts-node src/test.ts"

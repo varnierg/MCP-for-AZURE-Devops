@@ -21,12 +21,6 @@ const server = new Server(
   }
 );
 
-// Trigger session background update check for default organization/env credentials
-const creds = getCredentialsForProject();
-if (creds) {
-  checkAndUpdateDatabase(creds.organization, creds.pat).catch(() => {});
-}
-
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   // Load local DB version to include in descriptions
   const localDb = loadConfig();

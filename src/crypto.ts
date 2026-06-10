@@ -4,7 +4,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-const KEY_FILE = path.join(os.homedir(), '.antigravity-devops-key');
+let KEY_FILE = '';
+try {
+  KEY_FILE = path.join(os.homedir() || os.tmpdir() || '.', '.antigravity-devops-key');
+} catch (e) {
+  KEY_FILE = path.join('.', '.antigravity-devops-key');
+}
 
 export function getEncryptionKey(): string | null {
   try {
