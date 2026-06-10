@@ -2,18 +2,47 @@ const cp = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const serverProcess = cp.spawn('node', ['dist/index.js']);
-let output = '';
+const serverProcess = cp.spawn('node', ['dist/index.js'], { cwd: __dirname });
+let buffer = '';
 
 serverProcess.stdout.on('data', (data) => {
-  output += data.toString();
+  buffer += data.toString();
   try {
-    // Attempt to parse the captured output line by line as JSON-RPC response
-    const lines = output.split('\n');
+    // Process JSON-RPC messages separated by newlines
+    const lines = buffer.split('\n');
+    // Keep the last partial line in the buffer
+    buffer = lines.pop();
+
     for (const line of lines) {
       if (line.trim().startsWith('{')) {
         const json = JSON.parse(line.trim());
-        if (json.id === 1 && json.result && json.result.tools) {
+        
+        // Handle initialize response
+        if (json.id === 1 && json.result && json.result.protocolVersion) {
+          console.log('Received initialize response. Sending initialized notification and tools/list request...');
+          
+          // Send notifications/initialized (standard protocol flow)
+          serverProcess.stdin.write(
+            JSON.stringify({
+              jsonrpc: '2.0',
+              method: 'notifications/initialized'
+            }) + '\n'
+          );
+
+          // Send tools/list
+          serverProcess.stdin.write(
+            JSON.stringify({
+              jsonrpc: '2.0',
+              id: 2,
+              method: 'tools/list',
+              params: {}
+            }) + '\n'
+          );
+        }
+
+        // Handle tools/list response
+        if (json.id === 2 && json.result && json.result.tools) {
+          console.log('Received tools/list response.');
           const card = {
             serverInfo: {
               name: 'mcp-azure-devops',
@@ -33,40 +62,54 @@ serverProcess.stdout.on('data', (data) => {
             'utf8'
           );
 
-          console.log('Successfully generated /.well-known/mcp/server-card.json');
+          fs.writeFileSync(
+            path.join(__dirname, '.well-known', 'mcp.json'),
+            JSON.stringify(card, null, 2),
+            'utf8'
+          );
+
+          console.log('Successfully generated /.well-known/mcp/server-card.json and /.well-known/mcp.json');
           serverProcess.kill();
           process.exit(0);
         }
       }
     }
   } catch (err) {
-    // Keep buffering until we have a complete JSON message
+    // Parsing error or incomplete line; buffer will handle it
   }
 });
 
 serverProcess.stderr.on('data', (data) => {
-  // Ignore stderr logs during capture
+  console.log(`[Server Stderr]: ${data.toString().trim()}`);
 });
 
-serverProcess.on('exit', () => {
-  console.error('Server process exited before tools/list response was captured.');
+serverProcess.on('exit', (code) => {
+  console.log(`Server process exited with code ${code}`);
 });
 
-// Send tools/list request after starting the process
+// Start the handshake by sending initialize request
 setTimeout(() => {
+  console.log('Sending initialize request...');
   serverProcess.stdin.write(
     JSON.stringify({
       jsonrpc: '2.0',
       id: 1,
-      method: 'tools/list',
-      params: {}
+      method: 'initialize',
+      params: {
+        protocolVersion: '2024-11-05',
+        capabilities: {},
+        clientInfo: {
+          name: 'generator',
+          version: '1.0.0'
+        }
+      }
     }) + '\n'
   );
 }, 500);
 
 // Set safety timeout to prevent hanging
 setTimeout(() => {
-  console.error('Timeout waiting for tools/list response.');
+  console.error('Timeout waiting for response.');
   serverProcess.kill();
   process.exit(1);
 }, 5000);
