@@ -28,4 +28,4 @@ COPY --from=builder /app/dist ./dist
 ENV NODE_ENV=production
 
 # Run the bundled application using the absolute path
-ENTRYPOINT ["node", "/app/dist/index.js"]
+CMD ["node", "/app/dist/index.js"]

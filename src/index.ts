@@ -9,6 +9,17 @@ import { getCredentialsForProject, addProjectConfig, loadConfig } from './config
 import { DevOpsClient } from './devops';
 import { checkAndUpdateDatabase, searchLocalDatabase, fetchSingleApiInfoOnline } from './docs/updater';
 
+// Global error handlers to capture and log any hidden startup exceptions
+process.on('uncaughtException', (err) => {
+  console.error('[CRITICAL] Uncaught Exception:', err.stack || err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[CRITICAL] Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
 const server = new Server(
   {
     name: 'mcp-azure-devops',

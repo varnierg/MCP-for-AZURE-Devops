@@ -32796,6 +32796,14 @@ async function fetchSingleApiInfoOnline(method, pathStr, version2) {
 }
 
 // src/index.ts
+process.on("uncaughtException", (err) => {
+  console.error("[CRITICAL] Uncaught Exception:", err.stack || err);
+  process.exit(1);
+});
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("[CRITICAL] Unhandled Rejection at:", promise, "reason:", reason);
+  process.exit(1);
+});
 var server = new Server(
   {
     name: "mcp-azure-devops",
