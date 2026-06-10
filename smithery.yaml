@@ -20,16 +20,19 @@ configSchema:
       type: string
       description: (Optional) The default project to use if not specified in tool calls
 commandFunction: |-
-  (config) => ({
-    command: 'node',
-    args: ['dist/index.js'],
-    env: {
-      AZURE_DEVOPS_ORG: config.organization,
-      AZURE_DEVOPS_USERNAME: config.username,
-      AZURE_DEVOPS_PAT: config.pat,
-      AZURE_DEVOPS_PROJECT: config.defaultProject || ''
-    }
-  })
+  (config) => {
+    const c = config || {};
+    return {
+      command: 'node',
+      args: ['dist/index.js'],
+      env: {
+        AZURE_DEVOPS_ORG: c.organization || '',
+        AZURE_DEVOPS_USERNAME: c.username || '',
+        AZURE_DEVOPS_PAT: c.pat || '',
+        AZURE_DEVOPS_PROJECT: c.defaultProject || ''
+      }
+    };
+  }
 exampleConfig:
   organization: "my-org"
   username: "user@email.com"
