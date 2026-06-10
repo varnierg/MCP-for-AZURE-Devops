@@ -12,4 +12,10 @@ fs.copyFileSync(
   path.join(srcDir, 'api-directory.json'),
   path.join(destDir, 'api-directory.json')
 );
-console.log('Successfully copied api-directory.json to dist/docs/');
+
+// Copy to dist/ root as well to support esbuild bundled runtime
+fs.copyFileSync(
+  path.join(srcDir, 'api-directory.json'),
+  path.join(__dirname, 'dist', 'api-directory.json')
+);
+console.log('Successfully copied api-directory.json to both dist/docs/ and dist/');
