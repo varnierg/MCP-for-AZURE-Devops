@@ -5,11 +5,11 @@
   "main": "dist/index.js",
   "type": "commonjs",
   "scripts": {
-    "build": "tsc && node bundle.js && node copy-assets.js",
+    "build": "node node_modules/typescript/bin/tsc && node bundle.js && node copy-assets.js",
     "prepare": "",
     "start": "node dist/index.js",
-    "setup": "ts-node src/setup.ts",
-    "test": "ts-node src/test.ts"
+    "setup": "node node_modules/ts-node/dist/bin.js src/setup.ts",
+    "test": "node node_modules/ts-node/dist/bin.js src/test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.1",
