@@ -1,0 +1,54 @@
+{
+  "manifest_version": "0.2",
+  "name": "mcp-azure-devops",
+  "version": "1.0.0",
+  "description": "Azure DevOps Model Context Protocol Server",
+  "author": {
+    "name": "Varnier Gatto",
+    "email": "mcp_dev@jitime.com"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist/index.js"
+      ],
+      "env": {
+        "AZURE_DEVOPS_ORG": "${user_config.organization}",
+        "AZURE_DEVOPS_USERNAME": "${user_config.username}",
+        "AZURE_DEVOPS_PAT": "${user_config.pat}",
+        "AZURE_DEVOPS_PROJECT": "${user_config.defaultProject}"
+      }
+    }
+  },
+  "user_config": {
+    "organization": {
+      "type": "string",
+      "title": "Organization",
+      "description": "Azure DevOps Organization name (e.g. 'myorg' or 'jitime')",
+      "required": true
+    },
+    "username": {
+      "type": "string",
+      "title": "Username",
+      "description": "Your Azure DevOps username or email",
+      "required": true
+    },
+    "pat": {
+      "type": "string",
+      "title": "Personal Access Token (PAT)",
+      "description": "Your Azure DevOps Personal Access Token (PAT)",
+      "sensitive": true,
+      "required": true
+    },
+    "defaultProject": {
+      "type": "string",
+      "title": "Default Project",
+      "description": "(Optional) The default project to use if not specified in tool calls",
+      "required": false
+    }
+  },
+  "license": "MIT"
+}
