@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "build": "tsc && esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --external:axios --external:dotenv && node copy-assets.js",
-    "prepare": "tsc && esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --external:axios --external:dotenv && node copy-assets.js",
+    "prepare": "",
     "start": "node dist/index.js",
     "setup": "ts-node src/setup.ts",
     "test": "ts-node src/test.ts"

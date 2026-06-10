@@ -1,0 +1,171 @@
+{
+  "version": "7.1",
+  "apis": [
+    {
+      "area": "wit",
+      "resource": "workitems",
+      "method": "GET",
+      "path": "/{organization}/{project}/_apis/wit/workitems/{id}",
+      "version": "7.1",
+      "description": "Gets a single work item by its ID. Returns the fields, relations, and URL.",
+      "parameters": [
+        { "name": "id", "type": "integer", "required": true, "in": "path", "description": "The work item ID." },
+        { "name": "$expand", "type": "string", "required": false, "in": "query", "description": "The expand parameter (e.g. 'all', 'relations', 'fields')." }
+      ]
+    },
+    {
+      "area": "wit",
+      "resource": "workitems",
+      "method": "POST",
+      "path": "/{organization}/{project}/_apis/wit/workitems/${type}",
+      "version": "7.1",
+      "description": "Creates a new work item of a specified type (e.g. Bug, Task, User Story). The body must be a JSON Patch document (array of operations).",
+      "parameters": [
+        { "name": "type", "type": "string", "required": true, "in": "path", "description": "The type of the work item to create (e.g., 'Bug', 'Task', 'User Story')." }
+      ],
+      "requestBody": {
+        "contentType": "application/json-patch+json",
+        "example": "[ { \"op\": \"add\", \"path\": \"/fields/System.Title\", \"value\": \"My work item title\" } ]"
+      }
+    },
+    {
+      "area": "wit",
+      "resource": "workitems",
+      "method": "PATCH",
+      "path": "/{organization}/{project}/_apis/wit/workitems/{id}",
+      "version": "7.1",
+      "description": "Updates a single work item's fields or relations. The body must be a JSON Patch document.",
+      "parameters": [
+        { "name": "id", "type": "integer", "required": true, "in": "path", "description": "The work item ID." }
+      ],
+      "requestBody": {
+        "contentType": "application/json-patch+json",
+        "example": "[ { \"op\": \"add\", \"path\": \"/fields/System.State\", \"value\": \"Closed\" } ]"
+      }
+    },
+    {
+      "area": "wit",
+      "resource": "wiql",
+      "method": "POST",
+      "path": "/{organization}/{project}/_apis/wit/wiql",
+      "version": "7.1",
+      "description": "Queries work items using the Work Item Query Language (WIQL). Returns a list of work item IDs and URLs.",
+      "parameters": [],
+      "requestBody": {
+        "contentType": "application/json",
+        "example": "{ \"query\": \"Select [System.Id], [System.Title] From WorkItems Where [System.WorkItemType] = 'Bug'\" }"
+      }
+    },
+    {
+      "area": "git",
+      "resource": "repositories",
+      "method": "GET",
+      "path": "/{organization}/{project}/_apis/git/repositories",
+      "version": "7.1",
+      "description": "Retrieves a list of all Git repositories in the specified project.",
+      "parameters": []
+    },
+    {
+      "area": "git",
+      "resource": "items",
+      "method": "GET",
+      "path": "/{organization}/{project}/_apis/git/repositories/{repositoryId}/items",
+      "version": "7.1",
+      "description": "Retrieves a file or folder content from a specific repository path.",
+      "parameters": [
+        { "name": "repositoryId", "type": "string", "required": true, "in": "path", "description": "The name or ID of the repository." },
+        { "name": "path", "type": "string", "required": true, "in": "query", "description": "The file path (e.g. '/README.md')." },
+        { "name": "versionDescriptor.version", "type": "string", "required": false, "in": "query", "description": "The branch or commit version (e.g., 'main')." }
+      ]
+    },
+    {
+      "area": "git",
+      "resource": "pushes",
+      "method": "POST",
+      "path": "/{organization}/{project}/_apis/git/repositories/{repositoryId}/pushes",
+      "version": "7.1",
+      "description": "Pushes changes (creates commits, adds/deletes files, modifies content) directly to a branch.",
+      "parameters": [
+        { "name": "repositoryId", "type": "string", "required": true, "in": "path", "description": "The name or ID of the repository." }
+      ],
+      "requestBody": {
+        "contentType": "application/json",
+        "example": "{ \"refUpdates\": [ { \"name\": \"refs/heads/main\", \"oldObjectId\": \"previous-commit-sha\" } ], \"commits\": [ { \"comment\": \"Commit message\", \"changes\": [ { \"changeType\": \"add\", \"item\": { \"path\": \"/file.txt\" }, \"newContent\": { \"content\": \"Hello World\", \"contentType\": \"rawtext\" } } ] } ] }"
+      }
+    },
+    {
+      "area": "git",
+      "resource": "pullrequests",
+      "method": "POST",
+      "path": "/{organization}/{project}/_apis/git/repositories/{repositoryId}/pullrequests",
+      "version": "7.1",
+      "description": "Creates a new Pull Request in the specified repository.",
+      "parameters": [
+        { "name": "repositoryId", "type": "string", "required": true, "in": "path", "description": "The name or ID of the repository." }
+      ],
+      "requestBody": {
+        "contentType": "application/json",
+        "example": "{ \"sourceRefName\": \"refs/heads/feature\", \"targetRefName\": \"refs/heads/main\", \"title\": \"PR Title\", \"description\": \"PR Description\" }"
+      }
+    },
+    {
+      "area": "git",
+      "resource": "pullrequests",
+      "method": "GET",
+      "path": "/{organization}/{project}/_apis/git/repositories/{repositoryId}/pullrequests/{pullRequestId}",
+      "version": "7.1",
+      "description": "Retrieves details of a specific Pull Request by ID.",
+      "parameters": [
+        { "name": "repositoryId", "type": "string", "required": true, "in": "path", "description": "The name or ID of the repository." },
+        { "name": "pullRequestId", "type": "integer", "required": true, "in": "path", "description": "The ID of the pull request." }
+      ]
+    },
+    {
+      "area": "git",
+      "resource": "pullrequests",
+      "method": "PATCH",
+      "path": "/{organization}/{project}/_apis/git/repositories/{repositoryId}/pullrequests/{pullRequestId}",
+      "version": "7.1",
+      "description": "Updates a pull request (e.g. changes status to completed, abandoned, or active).",
+      "parameters": [
+        { "name": "repositoryId", "type": "string", "required": true, "in": "path", "description": "The name or ID of the repository." },
+        { "name": "pullRequestId", "type": "integer", "required": true, "in": "path", "description": "The ID of the pull request." }
+      ]
+    },
+    {
+      "area": "git",
+      "resource": "threads",
+      "method": "POST",
+      "path": "/{organization}/{project}/_apis/git/repositories/{repositoryId}/pullRequests/{pullRequestId}/threads",
+      "version": "7.1",
+      "description": "Creates a new feedback thread (comment thread) in a Pull Request, optionally targetting a specific file and line number.",
+      "parameters": [
+        { "name": "repositoryId", "type": "string", "required": true, "in": "path", "description": "The repository name or ID." },
+        { "name": "pullRequestId", "type": "integer", "required": true, "in": "path", "description": "The Pull Request ID." }
+      ]
+    },
+    {
+      "area": "pipelines",
+      "resource": "pipelines",
+      "method": "POST",
+      "path": "/{organization}/{project}/_apis/pipelines/{pipelineId}/runs",
+      "version": "7.1",
+      "description": "Runs (triggers) a specific pipeline.",
+      "parameters": [
+        { "name": "pipelineId", "type": "integer", "required": true, "in": "path", "description": "The ID of the pipeline." }
+      ]
+    },
+    {
+      "area": "identities",
+      "resource": "identities",
+      "method": "GET",
+      "path": "/{organization}/_apis/identities",
+      "version": "6.0",
+      "description": "Reads identities (users or groups) matching a search filter (e.g. DisplayName or MailAddress).",
+      "parameters": [
+        { "name": "searchFilter", "type": "string", "required": true, "in": "query", "description": "The filter type ('MailAddress', 'DisplayName', or 'General')." },
+        { "name": "filterValue", "type": "string", "required": true, "in": "query", "description": "The name or email to search for." }
+      ]
+    }
+  ]
+}
