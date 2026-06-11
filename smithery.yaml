@@ -36,33 +36,20 @@ configSchema:
 commandFunction: |-
   (config) => {
     const c = config || {};
-    const org = c.organization || '';
-    const user = c.username || '';
-    const pat = c.pat || '';
-    const proj = c.defaultProject || '';
-    
-    const isWin = typeof process !== 'undefined' && process.platform === 'win32';
-    
-    if (isWin) {
-      return {
-        command: 'node',
-        args: ['/app/dist/index.js'],
-        env: {
-          AZURE_DEVOPS_ORG: org,
-          AZURE_DEVOPS_USERNAME: user,
-          AZURE_DEVOPS_PAT: pat,
-          AZURE_DEVOPS_PROJECT: proj
-        }
-      };
-    } else {
-      return {
-        command: 'sh',
-        args: [
-          '-c',
-          `AZURE_DEVOPS_ORG='${org}' AZURE_DEVOPS_USERNAME='${user}' AZURE_DEVOPS_PAT='${pat}' AZURE_DEVOPS_PROJECT='${proj}' node /app/dist/index.js`
-        ]
-      };
+    const env = {
+      AZURE_DEVOPS_ORG: c.organization || '',
+      AZURE_DEVOPS_USERNAME: c.username || '',
+      AZURE_DEVOPS_PAT: c.pat || '',
+      AZURE_DEVOPS_PROJECT: c.defaultProject || ''
+    };
+    if (typeof process !== 'undefined' && process.env && process.env.PORT) {
+      env.PORT = process.env.PORT;
     }
+    return {
+      command: 'node',
+      args: ['/app/dist/index.js'],
+      env: env
+    };
   }
 exampleConfig:
   organization: "my-org"
