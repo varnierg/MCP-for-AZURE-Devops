@@ -1,3 +1,17 @@
+name: mcp-azure-devops
+displayName: Azure DevOps MCP Server
+description: A Model Context Protocol (MCP) server that enables AI assistants (such as Claude Desktop, Antigravity, etc.) to interact directly with Azure DevOps.
+version: 1.0.0
+author: Varnier Gatto <mcp_dev@jitime.com>
+license: MIT
+categories:
+  - developer-tools
+  - productivity
+tags:
+  - azure-devops
+  - git
+  - work-items
+  - pipelines
 runtime: container
 build:
   dockerfile: Dockerfile
@@ -22,15 +36,19 @@ configSchema:
 commandFunction: |-
   (config) => {
     const c = config || {};
+    const env = {};
+    if (typeof process !== 'undefined' && process.env) {
+      Object.assign(env, process.env);
+    }
+    env.PORT = (typeof process !== 'undefined' && process.env && process.env.PORT) || '8080';
+    env.AZURE_DEVOPS_ORG = c.organization || '';
+    env.AZURE_DEVOPS_USERNAME = c.username || '';
+    env.AZURE_DEVOPS_PAT = c.pat || '';
+    env.AZURE_DEVOPS_PROJECT = c.defaultProject || '';
     return {
       command: 'node',
       args: ['/app/dist/index.js'],
-      env: {
-        AZURE_DEVOPS_ORG: c.organization || '',
-        AZURE_DEVOPS_USERNAME: c.username || '',
-        AZURE_DEVOPS_PAT: c.pat || '',
-        AZURE_DEVOPS_PROJECT: c.defaultProject || ''
-      }
+      env: env
     };
   }
 exampleConfig:
@@ -38,3 +56,4 @@ exampleConfig:
   username: "user@email.com"
   pat: "your-pat-token-here"
   defaultProject: "MyProject"
+

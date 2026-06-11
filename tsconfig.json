@@ -10,8 +10,6 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "resolveJsonModule": true,
-    "baseUrl": ".",
-    "ignoreDeprecations": "5.0",
     "noImplicitAny": false
   },
   "include": ["src/**/*"]

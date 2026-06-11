@@ -25,19 +25,7 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
-const server = new Server(
-  {
-    name: 'mcp-azure-devops',
-    version: '1.0.0',
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
-  }
-);
-
-server.setRequestHandler(ListToolsRequestSchema, async () => {
+const handleListTools = async () => {
   // Load local DB version to include in descriptions
   const localDb = loadConfig();
   const dbVer = '7.1'; // fallback
@@ -378,9 +366,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       }
     ]
   };
-});
+};
 
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
+const handleCallTool = async (request: any) => {
   const { name, arguments: args } = request.params;
   const anyArgs = (args || {}) as any;
 
@@ -630,12 +618,29 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       content: [{ type: 'text', text: err.message }]
     };
   }
-});
+};
+
+function createServer(): Server {
+  const server = new Server(
+    {
+      name: 'mcp-azure-devops',
+      version: '1.0.0',
+    },
+    {
+      capabilities: {
+        tools: {},
+      },
+    }
+  );
+  server.setRequestHandler(ListToolsRequestSchema, handleListTools);
+  server.setRequestHandler(CallToolRequestSchema, handleCallTool);
+  return server;
+}
 
 async function main() {
   if (process.env.PORT) {
     const port = parseInt(process.env.PORT, 10);
-    const transports = new Map<string, SSEServerTransport>();
+    const transports = new Map<string, { transport: SSEServerTransport; server: Server }>();
 
     const httpServer = http.createServer(async (req, res) => {
       const parsedUrl = url.parse(req.url || '', true);
@@ -644,13 +649,14 @@ async function main() {
       // Establish SSE connection
       if (req.method === 'GET' && (pathname === '/sse' || (pathname === '/' && req.headers.accept === 'text/event-stream'))) {
         const transport = new SSEServerTransport('/messages', res);
-        transports.set(transport.sessionId, transport);
+        const serverInstance = createServer();
+        transports.set(transport.sessionId, { transport, server: serverInstance });
         
         res.on('close', () => {
           transports.delete(transport.sessionId);
         });
 
-        await server.connect(transport);
+        await serverInstance.connect(transport);
         return;
       }
 
@@ -663,8 +669,8 @@ async function main() {
           return;
         }
 
-        const transport = transports.get(sessionId);
-        if (!transport) {
+        const session = transports.get(sessionId);
+        if (!session) {
           res.writeHead(404, { 'Content-Type': 'text/plain' });
           res.end('Session not found');
           return;
@@ -677,7 +683,7 @@ async function main() {
         req.on('end', async () => {
           try {
             const body = JSON.parse(bodyStr);
-            await transport.handlePostMessage(req, res, body);
+            await session.transport.handlePostMessage(req, res, body);
           } catch (err: any) {
             res.writeHead(400, { 'Content-Type': 'text/plain' });
             res.end(`Invalid JSON body: ${err.message}`);
@@ -716,8 +722,9 @@ async function main() {
       console.error(`[Azure DevOps MCP Server] Server running on SSE transport listening on port ${port}.`);
     });
   } else {
+    const serverInstance = createServer();
     const transport = new StdioServerTransport();
-    await server.connect(transport);
+    await serverInstance.connect(transport);
     console.error('[Azure DevOps MCP Server] Server running on stdio transport.');
   }
 }
