@@ -40,7 +40,7 @@ commandFunction: |-
     if (typeof process !== 'undefined' && process.env) {
       Object.assign(env, process.env);
     }
-    env.PORT = (typeof process !== 'undefined' && process.env && process.env.PORT) || '8080';
+    env.PORT = (c.PORT || c.port || env.PORT || '8080').toString();
     env.AZURE_DEVOPS_ORG = c.organization || '';
     env.AZURE_DEVOPS_USERNAME = c.username || '';
     env.AZURE_DEVOPS_PAT = c.pat || '';
