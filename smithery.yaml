@@ -17,7 +17,7 @@ build:
   dockerfile: Dockerfile
   dockerBuildPath: .
 startCommand:
-  type: http
+  type: stdio
 configSchema:
   type: object
   properties:
@@ -40,7 +40,6 @@ commandFunction: |-
       command: 'node',
       args: [
         '/app/dist/index.js',
-        '--port', '8080',
         '--org', c.organization || '',
         '--username', c.username || '',
         '--pat', c.pat || '',

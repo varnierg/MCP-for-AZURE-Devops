@@ -1,7 +1,6 @@
 node_modules/
 src/
 tsconfig.json
-smithery.yaml
 Dockerfile
 .azure-devops-config.enc
 bundle.js
@@ -12,7 +11,5 @@ work_items_report.xlsx
 generate-card.js
 server.json
 smithery-schema.json
-.well-known/
 .gitignore
-README.md
 LICENSE.txt
