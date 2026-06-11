@@ -23,6 +23,8 @@ WORKDIR /app
 
 # Copy only the compiled bundle and assets from the builder stage
 COPY --from=builder /app/dist ./dist
+# Copy well-known metadata as well
+COPY .well-known ./.well-known
 
 # Set Node production environment
 ENV NODE_ENV=production

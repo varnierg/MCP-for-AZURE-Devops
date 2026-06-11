@@ -11,6 +11,8 @@ import { DevOpsClient } from './devops';
 import { checkAndUpdateDatabase, searchLocalDatabase, fetchSingleApiInfoOnline } from './docs/updater';
 import * as http from 'http';
 import * as url from 'url';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Global error handlers to capture and log any hidden startup exceptions
 process.on('uncaughtException', (err) => {
@@ -684,6 +686,21 @@ async function main() {
         return;
       }
 
+      // Serve well-known server card to skip dynamic scanning
+      if (req.method === 'GET' && (pathname === '/.well-known/mcp/server-card.json' || pathname === '/.well-known/mcp.json')) {
+        const filePath = path.join(process.cwd(), '.well-known', 'mcp', 'server-card.json');
+        fs.readFile(filePath, 'utf8', (err, data) => {
+          if (err) {
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end(`Internal Server Error: ${err.message}`);
+            return;
+          }
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(data);
+        });
+        return;
+      }
+
       // Simple health check
       if (req.method === 'GET' && (pathname === '/' || pathname === '/health')) {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -695,7 +712,7 @@ async function main() {
       res.end('Not Found');
     });
 
-    httpServer.listen(port, () => {
+    httpServer.listen(port, '0.0.0.0', () => {
       console.error(`[Azure DevOps MCP Server] Server running on SSE transport listening on port ${port}.`);
     });
   } else {
