@@ -2,6 +2,11 @@
   "name": "mcp-azure-devops",
   "version": "1.0.0",
   "description": "Azure DevOps Model Context Protocol Server",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/varnierg/MCP-for-AZURE-Devops.git"
+  },
+  "homepage": "https://github.com/varnierg/MCP-for-AZURE-Devops#readme",
   "main": "dist/index.js",
   "type": "commonjs",
   "scripts": {
