@@ -18,7 +18,6 @@ build:
   dockerBuildPath: .
 startCommand:
   type: http
-  port: 8080
 configSchema:
   type: object
   properties:
@@ -41,15 +40,11 @@ commandFunction: |-
       command: 'node',
       args: [
         '/app/dist/index.js',
-        '--port', '8080',
         '--org', c.organization || '',
         '--username', c.username || '',
         '--pat', c.pat || '',
         '--project', c.defaultProject || ''
-      ],
-      env: {
-        PORT: '8080'
-      }
+      ]
     };
   }
 
