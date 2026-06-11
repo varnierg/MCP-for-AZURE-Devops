@@ -3558,7 +3558,7 @@ var require_schemes = __commonJS({
         serialize: httpSerialize
       }
     );
-    var https3 = (
+    var https2 = (
       /** @type {SchemeHandler} */
       {
         scheme: "https",
@@ -3607,7 +3607,7 @@ var require_schemes = __commonJS({
       /** @type {Record<SchemeName, SchemeHandler>} */
       {
         http: http4,
-        https: https3,
+        https: https2,
         ws,
         wss,
         urn,
@@ -21783,7 +21783,7 @@ var require_form_data = __commonJS({
     var util4 = require("util");
     var path5 = require("path");
     var http4 = require("http");
-    var https3 = require("https");
+    var https2 = require("https");
     var parseUrl2 = require("url").parse;
     var fs5 = require("fs");
     var Stream = require("stream").Stream;
@@ -22033,7 +22033,7 @@ var require_form_data = __commonJS({
       });
     };
     FormData3.prototype.submit = function(params, cb) {
-      var request2;
+      var request;
       var options;
       var defaults2 = { method: "post" };
       if (typeof params === "string") {
@@ -22052,9 +22052,9 @@ var require_form_data = __commonJS({
       }
       options.headers = this.getHeaders(params.headers);
       if (options.protocol === "https:") {
-        request2 = https3.request(options);
+        request = https2.request(options);
       } else {
-        request2 = http4.request(options);
+        request = http4.request(options);
       }
       this.getLength(function(err, length) {
         if (err && err !== "Unknown stream") {
@@ -22062,22 +22062,22 @@ var require_form_data = __commonJS({
           return;
         }
         if (length) {
-          request2.setHeader("Content-Length", length);
+          request.setHeader("Content-Length", length);
         }
-        this.pipe(request2);
+        this.pipe(request);
         if (cb) {
           var onResponse;
           var callback = function(error2, responce) {
-            request2.removeListener("error", callback);
-            request2.removeListener("response", onResponse);
+            request.removeListener("error", callback);
+            request.removeListener("response", onResponse);
             return cb.call(this, error2, responce);
           };
           onResponse = callback.bind(this, null);
-          request2.on("error", callback);
-          request2.on("response", onResponse);
+          request.on("error", callback);
+          request.on("response", onResponse);
         }
       }.bind(this));
-      return request2;
+      return request;
     };
     FormData3.prototype._error = function(err) {
       if (!this.error) {
@@ -23218,7 +23218,7 @@ var require_follow_redirects = __commonJS({
     var url3 = require("url");
     var URL3 = url3.URL;
     var http4 = require("http");
-    var https3 = require("https");
+    var https2 = require("https");
     var Writable = require("stream").Writable;
     var assert2 = require("assert");
     var debug = require_debug();
@@ -23472,10 +23472,10 @@ var require_follow_redirects = __commonJS({
         var scheme = protocol.slice(0, -1);
         this._options.agent = this._options.agents[scheme];
       }
-      var request2 = this._currentRequest = nativeProtocol.request(this._options, this._onNativeResponse);
-      request2._redirectable = this;
+      var request = this._currentRequest = nativeProtocol.request(this._options, this._onNativeResponse);
+      request._redirectable = this;
       for (var event of events) {
-        request2.on(event, eventHandlers[event]);
+        request.on(event, eventHandlers[event]);
       }
       this._currentUrl = /^\//.test(this._options.path) ? url3.format(this._options) : (
         // When making a request to a proxy, […]
@@ -23487,16 +23487,16 @@ var require_follow_redirects = __commonJS({
         var self2 = this;
         var buffers = this._requestBodyBuffers;
         (function writeNext(error2) {
-          if (request2 === self2._currentRequest) {
+          if (request === self2._currentRequest) {
             if (error2) {
               self2.emit("error", error2);
             } else if (i < buffers.length) {
               var buffer = buffers[i++];
-              if (!request2.finished) {
-                request2.write(buffer.data, buffer.encoding, writeNext);
+              if (!request.finished) {
+                request.write(buffer.data, buffer.encoding, writeNext);
               }
             } else if (self2._ended) {
-              request2.end();
+              request.end();
             }
           }
         })();
@@ -23578,7 +23578,7 @@ var require_follow_redirects = __commonJS({
         var protocol = scheme + ":";
         var nativeProtocol = nativeProtocols[protocol] = protocols[scheme];
         var wrappedProtocol = exports3[scheme] = Object.create(nativeProtocol);
-        function request2(input, options, callback) {
+        function request(input, options, callback) {
           if (isURL(input)) {
             input = spreadUrlObject(input);
           } else if (isString2(input)) {
@@ -23610,7 +23610,7 @@ var require_follow_redirects = __commonJS({
           return wrappedRequest;
         }
         Object.defineProperties(wrappedProtocol, {
-          request: { value: request2, configurable: true, enumerable: true, writable: true },
+          request: { value: request, configurable: true, enumerable: true, writable: true },
           get: { value: get, configurable: true, enumerable: true, writable: true }
         });
       });
@@ -23688,12 +23688,12 @@ var require_follow_redirects = __commonJS({
       });
       return CustomError;
     }
-    function destroyRequest(request2, error2) {
+    function destroyRequest(request, error2) {
       for (var event of events) {
-        request2.removeListener(event, eventHandlers[event]);
+        request.removeListener(event, eventHandlers[event]);
       }
-      request2.on("error", noop2);
-      request2.destroy(error2);
+      request.on("error", noop2);
+      request.destroy(error2);
     }
     function isSubdomain(subdomain, domain) {
       assert2(isString2(subdomain) && isString2(domain));
@@ -23718,7 +23718,7 @@ var require_follow_redirects = __commonJS({
     function escapeRegex2(regex) {
       return regex.replace(/[\]\\/()*+?.$]/g, "\\$&");
     }
-    module2.exports = wrap({ http: http4, https: https3 });
+    module2.exports = wrap({ http: http4, https: https2 });
     module2.exports.wrap = wrap;
   }
 });
@@ -30576,8 +30576,8 @@ var Protocol = class {
     this._taskStore = _options?.taskStore;
     this._taskMessageQueue = _options?.taskMessageQueue;
     if (this._taskStore) {
-      this.setRequestHandler(GetTaskRequestSchema, async (request2, extra) => {
-        const task = await this._taskStore.getTask(request2.params.taskId, extra.sessionId);
+      this.setRequestHandler(GetTaskRequestSchema, async (request, extra) => {
+        const task = await this._taskStore.getTask(request.params.taskId, extra.sessionId);
         if (!task) {
           throw new McpError(ErrorCode.InvalidParams, "Failed to retrieve task: Task not found");
         }
@@ -30585,9 +30585,9 @@ var Protocol = class {
           ...task
         };
       });
-      this.setRequestHandler(GetTaskPayloadRequestSchema, async (request2, extra) => {
+      this.setRequestHandler(GetTaskPayloadRequestSchema, async (request, extra) => {
         const handleTaskResult = async () => {
-          const taskId = request2.params.taskId;
+          const taskId = request.params.taskId;
           if (this._taskMessageQueue) {
             let queuedMessage;
             while (queuedMessage = await this._taskMessageQueue.dequeue(taskId, extra.sessionId)) {
@@ -30638,9 +30638,9 @@ var Protocol = class {
         };
         return await handleTaskResult();
       });
-      this.setRequestHandler(ListTasksRequestSchema, async (request2, extra) => {
+      this.setRequestHandler(ListTasksRequestSchema, async (request, extra) => {
         try {
-          const { tasks, nextCursor } = await this._taskStore.listTasks(request2.params?.cursor, extra.sessionId);
+          const { tasks, nextCursor } = await this._taskStore.listTasks(request.params?.cursor, extra.sessionId);
           return {
             tasks,
             nextCursor,
@@ -30650,20 +30650,20 @@ var Protocol = class {
           throw new McpError(ErrorCode.InvalidParams, `Failed to list tasks: ${error2 instanceof Error ? error2.message : String(error2)}`);
         }
       });
-      this.setRequestHandler(CancelTaskRequestSchema, async (request2, extra) => {
+      this.setRequestHandler(CancelTaskRequestSchema, async (request, extra) => {
         try {
-          const task = await this._taskStore.getTask(request2.params.taskId, extra.sessionId);
+          const task = await this._taskStore.getTask(request.params.taskId, extra.sessionId);
           if (!task) {
-            throw new McpError(ErrorCode.InvalidParams, `Task not found: ${request2.params.taskId}`);
+            throw new McpError(ErrorCode.InvalidParams, `Task not found: ${request.params.taskId}`);
           }
           if (isTerminal(task.status)) {
             throw new McpError(ErrorCode.InvalidParams, `Cannot cancel task in terminal status: ${task.status}`);
           }
-          await this._taskStore.updateTaskStatus(request2.params.taskId, "cancelled", "Client cancelled task execution.", extra.sessionId);
-          this._clearTaskQueue(request2.params.taskId);
-          const cancelledTask = await this._taskStore.getTask(request2.params.taskId, extra.sessionId);
+          await this._taskStore.updateTaskStatus(request.params.taskId, "cancelled", "Client cancelled task execution.", extra.sessionId);
+          this._clearTaskQueue(request.params.taskId);
+          const cancelledTask = await this._taskStore.getTask(request.params.taskId, extra.sessionId);
           if (!cancelledTask) {
-            throw new McpError(ErrorCode.InvalidParams, `Task not found after cancellation: ${request2.params.taskId}`);
+            throw new McpError(ErrorCode.InvalidParams, `Task not found after cancellation: ${request.params.taskId}`);
           }
           return {
             _meta: {},
@@ -30784,14 +30784,14 @@ var Protocol = class {
     }
     Promise.resolve().then(() => handler(notification)).catch((error2) => this._onerror(new Error(`Uncaught error in notification handler: ${error2}`)));
   }
-  _onrequest(request2, extra) {
-    const handler = this._requestHandlers.get(request2.method) ?? this.fallbackRequestHandler;
+  _onrequest(request, extra) {
+    const handler = this._requestHandlers.get(request.method) ?? this.fallbackRequestHandler;
     const capturedTransport = this._transport;
-    const relatedTaskId = request2.params?._meta?.[RELATED_TASK_META_KEY]?.taskId;
+    const relatedTaskId = request.params?._meta?.[RELATED_TASK_META_KEY]?.taskId;
     if (handler === void 0) {
       const errorResponse = {
         jsonrpc: "2.0",
-        id: request2.id,
+        id: request.id,
         error: {
           code: ErrorCode.MethodNotFound,
           message: "Method not found"
@@ -30809,17 +30809,17 @@ var Protocol = class {
       return;
     }
     const abortController = new AbortController();
-    this._requestHandlerAbortControllers.set(request2.id, abortController);
-    const taskCreationParams = isTaskAugmentedRequestParams(request2.params) ? request2.params.task : void 0;
-    const taskStore = this._taskStore ? this.requestTaskStore(request2, capturedTransport?.sessionId) : void 0;
+    this._requestHandlerAbortControllers.set(request.id, abortController);
+    const taskCreationParams = isTaskAugmentedRequestParams(request.params) ? request.params.task : void 0;
+    const taskStore = this._taskStore ? this.requestTaskStore(request, capturedTransport?.sessionId) : void 0;
     const fullExtra = {
       signal: abortController.signal,
       sessionId: capturedTransport?.sessionId,
-      _meta: request2.params?._meta,
+      _meta: request.params?._meta,
       sendNotification: async (notification) => {
         if (abortController.signal.aborted)
           return;
-        const notificationOptions = { relatedRequestId: request2.id };
+        const notificationOptions = { relatedRequestId: request.id };
         if (relatedTaskId) {
           notificationOptions.relatedTask = { taskId: relatedTaskId };
         }
@@ -30829,7 +30829,7 @@ var Protocol = class {
         if (abortController.signal.aborted) {
           throw new McpError(ErrorCode.ConnectionClosed, "Request was cancelled");
         }
-        const requestOptions = { ...options, relatedRequestId: request2.id };
+        const requestOptions = { ...options, relatedRequestId: request.id };
         if (relatedTaskId && !requestOptions.relatedTask) {
           requestOptions.relatedTask = { taskId: relatedTaskId };
         }
@@ -30840,7 +30840,7 @@ var Protocol = class {
         return await this.request(r, resultSchema, requestOptions);
       },
       authInfo: extra?.authInfo,
-      requestId: request2.id,
+      requestId: request.id,
       requestInfo: extra?.requestInfo,
       taskId: relatedTaskId,
       taskStore,
@@ -30850,16 +30850,16 @@ var Protocol = class {
     };
     Promise.resolve().then(() => {
       if (taskCreationParams) {
-        this.assertTaskHandlerCapability(request2.method);
+        this.assertTaskHandlerCapability(request.method);
       }
-    }).then(() => handler(request2, fullExtra)).then(async (result) => {
+    }).then(() => handler(request, fullExtra)).then(async (result) => {
       if (abortController.signal.aborted) {
         return;
       }
       const response = {
         result,
         jsonrpc: "2.0",
-        id: request2.id
+        id: request.id
       };
       if (relatedTaskId && this._taskMessageQueue) {
         await this._enqueueTaskMessage(relatedTaskId, {
@@ -30876,7 +30876,7 @@ var Protocol = class {
       }
       const errorResponse = {
         jsonrpc: "2.0",
-        id: request2.id,
+        id: request.id,
         error: {
           code: Number.isSafeInteger(error2["code"]) ? error2["code"] : ErrorCode.InternalError,
           message: error2.message ?? "Internal error",
@@ -30893,8 +30893,8 @@ var Protocol = class {
         await capturedTransport?.send(errorResponse);
       }
     }).catch((error2) => this._onerror(new Error(`Failed to send response: ${error2}`))).finally(() => {
-      if (this._requestHandlerAbortControllers.get(request2.id) === abortController) {
-        this._requestHandlerAbortControllers.delete(request2.id);
+      if (this._requestHandlerAbortControllers.get(request.id) === abortController) {
+        this._requestHandlerAbortControllers.delete(request.id);
       }
     });
   }
@@ -30998,11 +30998,11 @@ var Protocol = class {
    *
    * @experimental Use `client.experimental.tasks.requestStream()` to access this method.
    */
-  async *requestStream(request2, resultSchema, options) {
+  async *requestStream(request, resultSchema, options) {
     const { task } = options ?? {};
     if (!task) {
       try {
-        const result = await this.request(request2, resultSchema, options);
+        const result = await this.request(request, resultSchema, options);
         yield { type: "result", result };
       } catch (error2) {
         yield {
@@ -31014,7 +31014,7 @@ var Protocol = class {
     }
     let taskId;
     try {
-      const createResult = await this.request(request2, CreateTaskResultSchema, options);
+      const createResult = await this.request(request, CreateTaskResultSchema, options);
       if (createResult.task) {
         taskId = createResult.task.taskId;
         yield { type: "taskCreated", task: createResult.task };
@@ -31062,7 +31062,7 @@ var Protocol = class {
    *
    * Do not use this method to emit notifications! Use notification() instead.
    */
-  request(request2, resultSchema, options) {
+  request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
     return new Promise((resolve, reject) => {
       const earlyReject = (error2) => {
@@ -31074,9 +31074,9 @@ var Protocol = class {
       }
       if (this._options?.enforceStrictCapabilities === true) {
         try {
-          this.assertCapabilityForMethod(request2.method);
+          this.assertCapabilityForMethod(request.method);
           if (task) {
-            this.assertTaskCapability(request2.method);
+            this.assertTaskCapability(request.method);
           }
         } catch (e) {
           earlyReject(e);
@@ -31086,16 +31086,16 @@ var Protocol = class {
       options?.signal?.throwIfAborted();
       const messageId = this._requestMessageId++;
       const jsonrpcRequest = {
-        ...request2,
+        ...request,
         jsonrpc: "2.0",
         id: messageId
       };
       if (options?.onprogress) {
         this._progressHandlers.set(messageId, options.onprogress);
         jsonrpcRequest.params = {
-          ...request2.params,
+          ...request.params,
           _meta: {
-            ...request2.params?._meta || {},
+            ...request.params?._meta || {},
             progressToken: messageId
           }
         };
@@ -31299,8 +31299,8 @@ var Protocol = class {
   setRequestHandler(requestSchema, handler) {
     const method = getMethodLiteral(requestSchema);
     this.assertRequestHandlerCapability(method);
-    this._requestHandlers.set(method, (request2, extra) => {
-      const parsed = parseWithCompat(requestSchema, request2);
+    this._requestHandlers.set(method, (request, extra) => {
+      const parsed = parseWithCompat(requestSchema, request);
       return Promise.resolve(handler(parsed, extra));
     });
   }
@@ -31415,19 +31415,19 @@ var Protocol = class {
       }, { once: true });
     });
   }
-  requestTaskStore(request2, sessionId) {
+  requestTaskStore(request, sessionId) {
     const taskStore = this._taskStore;
     if (!taskStore) {
       throw new Error("No task store configured");
     }
     return {
       createTask: async (taskParams) => {
-        if (!request2) {
+        if (!request) {
           throw new Error("No request provided");
         }
-        return await taskStore.createTask(taskParams, request2.id, {
-          method: request2.method,
-          params: request2.params
+        return await taskStore.createTask(taskParams, request.id, {
+          method: request.method,
+          params: request.params
         }, sessionId);
       },
       getTask: async (taskId) => {
@@ -31588,8 +31588,8 @@ var ExperimentalServerTasks = class {
    *
    * @experimental
    */
-  requestStream(request2, resultSchema, options) {
-    return this._server.requestStream(request2, resultSchema, options);
+  requestStream(request, resultSchema, options) {
+    return this._server.requestStream(request, resultSchema, options);
   }
   /**
    * Sends a sampling request and returns an AsyncGenerator that yields response messages.
@@ -31834,12 +31834,12 @@ var Server = class extends Protocol {
     this._capabilities = options?.capabilities ?? {};
     this._instructions = options?.instructions;
     this._jsonSchemaValidator = options?.jsonSchemaValidator ?? new AjvJsonSchemaValidator();
-    this.setRequestHandler(InitializeRequestSchema, (request2) => this._oninitialize(request2));
+    this.setRequestHandler(InitializeRequestSchema, (request) => this._oninitialize(request));
     this.setNotificationHandler(InitializedNotificationSchema, () => this.oninitialized?.());
     if (this._capabilities.logging) {
-      this.setRequestHandler(SetLevelRequestSchema, async (request2, extra) => {
+      this.setRequestHandler(SetLevelRequestSchema, async (request, extra) => {
         const transportSessionId = extra.sessionId || extra.requestInfo?.headers["mcp-session-id"] || void 0;
-        const { level } = request2.params;
+        const { level } = request.params;
         const parseResult = LoggingLevelSchema.safeParse(level);
         if (parseResult.success) {
           this._loggingLevels.set(transportSessionId, parseResult.data);
@@ -31898,14 +31898,14 @@ var Server = class extends Protocol {
     }
     const method = methodValue;
     if (method === "tools/call") {
-      const wrappedHandler = async (request2, extra) => {
-        const validatedRequest = safeParse2(CallToolRequestSchema, request2);
+      const wrappedHandler = async (request, extra) => {
+        const validatedRequest = safeParse2(CallToolRequestSchema, request);
         if (!validatedRequest.success) {
           const errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
           throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call request: ${errorMessage}`);
         }
         const { params } = validatedRequest.data;
-        const result = await Promise.resolve(handler(request2, extra));
+        const result = await Promise.resolve(handler(request, extra));
         if (params.task) {
           const taskValidationResult = safeParse2(CreateTaskResultSchema, result);
           if (!taskValidationResult.success) {
@@ -32036,10 +32036,10 @@ var Server = class extends Protocol {
     }
     assertToolsCallTaskCapability(this._capabilities.tasks?.requests, method, "Server");
   }
-  async _oninitialize(request2) {
-    const requestedVersion = request2.params.protocolVersion;
-    this._clientCapabilities = request2.params.capabilities;
-    this._clientVersion = request2.params.clientInfo;
+  async _oninitialize(request) {
+    const requestedVersion = request.params.protocolVersion;
+    this._clientCapabilities = request.params.capabilities;
+    this._clientVersion = request.params.clientInfo;
     const protocolVersion = SUPPORTED_PROTOCOL_VERSIONS.includes(requestedVersion) ? requestedVersion : LATEST_PROTOCOL_VERSION;
     return {
       protocolVersion,
@@ -33530,8 +33530,8 @@ function redactConfig(config2, redactKeys) {
   return visit(config2);
 }
 var AxiosError = class _AxiosError extends Error {
-  static from(error2, code, config2, request2, response, customProps) {
-    const axiosError = new _AxiosError(error2.message, code || error2.code, config2, request2, response);
+  static from(error2, code, config2, request, response, customProps) {
+    const axiosError = new _AxiosError(error2.message, code || error2.code, config2, request, response);
     axiosError.cause = error2;
     axiosError.name = error2.name;
     if (error2.status != null && axiosError.status == null) {
@@ -33551,7 +33551,7 @@ var AxiosError = class _AxiosError extends Error {
    *
    * @returns {Error} The created error.
    */
-  constructor(message, code, config2, request2, response) {
+  constructor(message, code, config2, request, response) {
     super(message);
     Object.defineProperty(this, "message", {
       // Null-proto descriptor so a polluted Object.prototype.get cannot turn
@@ -33566,7 +33566,7 @@ var AxiosError = class _AxiosError extends Error {
     this.isAxiosError = true;
     code && (this.code = code);
     config2 && (this.config = config2);
-    request2 && (this.request = request2);
+    request && (this.request = request);
     if (response) {
       this.response = response;
       this.status = response.status;
@@ -34153,8 +34153,8 @@ var CanceledError = class extends AxiosError_default {
    *
    * @returns {CanceledError} The created error.
    */
-  constructor(message, config2, request2) {
-    super(message == null ? "canceled" : message, AxiosError_default.ERR_CANCELED, config2, request2);
+  constructor(message, config2, request) {
+    super(message == null ? "canceled" : message, AxiosError_default.ERR_CANCELED, config2, request);
     this.name = "CanceledError";
     this.__CANCEL__ = true;
   }
@@ -36100,24 +36100,24 @@ var xhr_default = isXHRAdapterSupported && function(config2) {
       _config.cancelToken && _config.cancelToken.unsubscribe(onCanceled);
       _config.signal && _config.signal.removeEventListener("abort", onCanceled);
     }
-    let request2 = new XMLHttpRequest();
-    request2.open(_config.method.toUpperCase(), _config.url, true);
-    request2.timeout = _config.timeout;
+    let request = new XMLHttpRequest();
+    request.open(_config.method.toUpperCase(), _config.url, true);
+    request.timeout = _config.timeout;
     function onloadend() {
-      if (!request2) {
+      if (!request) {
         return;
       }
       const responseHeaders = AxiosHeaders_default.from(
-        "getAllResponseHeaders" in request2 && request2.getAllResponseHeaders()
+        "getAllResponseHeaders" in request && request.getAllResponseHeaders()
       );
-      const responseData = !responseType || responseType === "text" || responseType === "json" ? request2.responseText : request2.response;
+      const responseData = !responseType || responseType === "text" || responseType === "json" ? request.responseText : request.response;
       const response = {
         data: responseData,
-        status: request2.status,
-        statusText: request2.statusText,
+        status: request.status,
+        statusText: request.statusText,
         headers: responseHeaders,
         config: config2,
-        request: request2
+        request
       };
       settle(
         function _resolve(value) {
@@ -36130,38 +36130,38 @@ var xhr_default = isXHRAdapterSupported && function(config2) {
         },
         response
       );
-      request2 = null;
+      request = null;
     }
-    if ("onloadend" in request2) {
-      request2.onloadend = onloadend;
+    if ("onloadend" in request) {
+      request.onloadend = onloadend;
     } else {
-      request2.onreadystatechange = function handleLoad() {
-        if (!request2 || request2.readyState !== 4) {
+      request.onreadystatechange = function handleLoad() {
+        if (!request || request.readyState !== 4) {
           return;
         }
-        if (request2.status === 0 && !(request2.responseURL && request2.responseURL.startsWith("file:"))) {
+        if (request.status === 0 && !(request.responseURL && request.responseURL.startsWith("file:"))) {
           return;
         }
         setTimeout(onloadend);
       };
     }
-    request2.onabort = function handleAbort() {
-      if (!request2) {
+    request.onabort = function handleAbort() {
+      if (!request) {
         return;
       }
-      reject(new AxiosError_default("Request aborted", AxiosError_default.ECONNABORTED, config2, request2));
+      reject(new AxiosError_default("Request aborted", AxiosError_default.ECONNABORTED, config2, request));
       done();
-      request2 = null;
+      request = null;
     };
-    request2.onerror = function handleError(event) {
+    request.onerror = function handleError(event) {
       const msg = event && event.message ? event.message : "Network Error";
-      const err = new AxiosError_default(msg, AxiosError_default.ERR_NETWORK, config2, request2);
+      const err = new AxiosError_default(msg, AxiosError_default.ERR_NETWORK, config2, request);
       err.event = event || null;
       reject(err);
       done();
-      request2 = null;
+      request = null;
     };
-    request2.ontimeout = function handleTimeout() {
+    request.ontimeout = function handleTimeout() {
       let timeoutErrorMessage = _config.timeout ? "timeout of " + _config.timeout + "ms exceeded" : "timeout exceeded";
       const transitional2 = _config.transitional || transitional_default;
       if (_config.timeoutErrorMessage) {
@@ -36172,42 +36172,42 @@ var xhr_default = isXHRAdapterSupported && function(config2) {
           timeoutErrorMessage,
           transitional2.clarifyTimeoutError ? AxiosError_default.ETIMEDOUT : AxiosError_default.ECONNABORTED,
           config2,
-          request2
+          request
         )
       );
       done();
-      request2 = null;
+      request = null;
     };
     requestData === void 0 && requestHeaders.setContentType(null);
-    if ("setRequestHeader" in request2) {
+    if ("setRequestHeader" in request) {
       utils_default.forEach(toByteStringHeaderObject(requestHeaders), function setRequestHeader(val, key) {
-        request2.setRequestHeader(key, val);
+        request.setRequestHeader(key, val);
       });
     }
     if (!utils_default.isUndefined(_config.withCredentials)) {
-      request2.withCredentials = !!_config.withCredentials;
+      request.withCredentials = !!_config.withCredentials;
     }
     if (responseType && responseType !== "json") {
-      request2.responseType = _config.responseType;
+      request.responseType = _config.responseType;
     }
     if (onDownloadProgress) {
       [downloadThrottled, flushDownload] = progressEventReducer(onDownloadProgress, true);
-      request2.addEventListener("progress", downloadThrottled);
+      request.addEventListener("progress", downloadThrottled);
     }
-    if (onUploadProgress && request2.upload) {
+    if (onUploadProgress && request.upload) {
       [uploadThrottled, flushUpload] = progressEventReducer(onUploadProgress);
-      request2.upload.addEventListener("progress", uploadThrottled);
-      request2.upload.addEventListener("loadend", flushUpload);
+      request.upload.addEventListener("progress", uploadThrottled);
+      request.upload.addEventListener("loadend", flushUpload);
     }
     if (_config.cancelToken || _config.signal) {
       onCanceled = (cancel) => {
-        if (!request2) {
+        if (!request) {
           return;
         }
-        reject(!cancel || cancel.type ? new CanceledError_default(null, config2, request2) : cancel);
-        request2.abort();
+        reject(!cancel || cancel.type ? new CanceledError_default(null, config2, request) : cancel);
+        request.abort();
         done();
-        request2 = null;
+        request = null;
       };
       _config.cancelToken && _config.cancelToken.subscribe(onCanceled);
       if (_config.signal) {
@@ -36225,7 +36225,7 @@ var xhr_default = isXHRAdapterSupported && function(config2) {
       );
       return;
     }
-    request2.send(requestData || null);
+    request.send(requestData || null);
   });
 };
 
@@ -36405,7 +36405,7 @@ var factory = (env) => {
   const encodeText = isFetchSupported && (typeof TextEncoder2 === "function" ? /* @__PURE__ */ ((encoder) => (str) => encoder.encode(str))(new TextEncoder2()) : async (str) => new Uint8Array(await new Request(str).arrayBuffer()));
   const supportsRequestStream = isRequestSupported && isReadableStreamSupported && test(() => {
     let duplexAccessed = false;
-    const request2 = new Request(platform_default.origin, {
+    const request = new Request(platform_default.origin, {
       body: new ReadableStream2(),
       method: "POST",
       get duplex() {
@@ -36413,9 +36413,9 @@ var factory = (env) => {
         return "half";
       }
     });
-    const hasContentType = request2.headers.has("Content-Type");
-    if (request2.body != null) {
-      request2.body.cancel();
+    const hasContentType = request.headers.has("Content-Type");
+    if (request.body != null) {
+      request.body.cancel();
     }
     return duplexAccessed && !hasContentType;
   });
@@ -36492,7 +36492,7 @@ var factory = (env) => {
       [signal, cancelToken && cancelToken.toAbortSignal()],
       timeout
     );
-    let request2 = null;
+    let request = null;
     const unsubscribe = composedSignal && composedSignal.unsubscribe && (() => {
       composedSignal.unsubscribe();
     });
@@ -36538,7 +36538,7 @@ var factory = (env) => {
             "maxContentLength size of " + maxContentLength + " exceeded",
             AxiosError_default.ERR_BAD_RESPONSE,
             config2,
-            request2
+            request
           );
         }
       }
@@ -36549,7 +36549,7 @@ var factory = (env) => {
             "Request body larger than maxBodyLength limit",
             AxiosError_default.ERR_BAD_REQUEST,
             config2,
-            request2
+            request
           );
         }
       }
@@ -36591,8 +36591,8 @@ var factory = (env) => {
         duplex: "half",
         credentials: isCredentialsSupported ? withCredentials : void 0
       };
-      request2 = isRequestSupported && new Request(url3, resolvedOptions);
-      let response = await (isRequestSupported ? _fetch(request2, fetchOptions) : _fetch(url3, resolvedOptions));
+      request = isRequestSupported && new Request(url3, resolvedOptions);
+      let response = await (isRequestSupported ? _fetch(request, fetchOptions) : _fetch(url3, resolvedOptions));
       if (hasMaxContentLength) {
         const declaredLength = utils_default.toFiniteNumber(response.headers.get("content-length"));
         if (declaredLength != null && declaredLength > maxContentLength) {
@@ -36600,7 +36600,7 @@ var factory = (env) => {
             "maxContentLength size of " + maxContentLength + " exceeded",
             AxiosError_default.ERR_BAD_RESPONSE,
             config2,
-            request2
+            request
           );
         }
       }
@@ -36624,7 +36624,7 @@ var factory = (env) => {
                 "maxContentLength size of " + maxContentLength + " exceeded",
                 AxiosError_default.ERR_BAD_RESPONSE,
                 config2,
-                request2
+                request
               );
             }
           }
@@ -36659,7 +36659,7 @@ var factory = (env) => {
             "maxContentLength size of " + maxContentLength + " exceeded",
             AxiosError_default.ERR_BAD_RESPONSE,
             config2,
-            request2
+            request
           );
         }
       }
@@ -36671,7 +36671,7 @@ var factory = (env) => {
           status: response.status,
           statusText: response.statusText,
           config: config2,
-          request: request2
+          request
         });
       });
     } catch (err) {
@@ -36679,7 +36679,7 @@ var factory = (env) => {
       if (composedSignal && composedSignal.aborted && composedSignal.reason instanceof AxiosError_default) {
         const canceledError = composedSignal.reason;
         canceledError.config = config2;
-        request2 && (canceledError.request = request2);
+        request && (canceledError.request = request);
         err !== canceledError && (canceledError.cause = err);
         throw canceledError;
       }
@@ -36689,7 +36689,7 @@ var factory = (env) => {
             "Network Error",
             AxiosError_default.ERR_NETWORK,
             config2,
-            request2,
+            request,
             err && err.response
           ),
           {
@@ -36697,7 +36697,7 @@ var factory = (env) => {
           }
         );
       }
-      throw AxiosError_default.from(err, err && err.code, config2, request2, err && err.response);
+      throw AxiosError_default.from(err, err && err.code, config2, request, err && err.response);
     }
   };
 };
@@ -37134,11 +37134,11 @@ var CancelToken = class _CancelToken {
       };
       return promise;
     };
-    executor(function cancel(message, config2, request2) {
+    executor(function cancel(message, config2, request) {
       if (token.reason) {
         return;
       }
-      token.reason = new CanceledError_default(message, config2, request2);
+      token.reason = new CanceledError_default(message, config2, request);
       resolvePromise(token.reason);
     });
   }
@@ -37886,44 +37886,13 @@ var http3 = __toESM(require("http"));
 var url2 = __toESM(require("url"));
 var fs4 = __toESM(require("fs"));
 var path4 = __toESM(require("path"));
-var https2 = __toESM(require("https"));
-function logToCloud(msg) {
-  try {
-    const payload = JSON.stringify({
-      time: (/* @__PURE__ */ new Date()).toISOString(),
-      message: msg,
-      env: {
-        PORT: process.env.PORT,
-        NODE_ENV: process.env.NODE_ENV,
-        PATH: process.env.PATH ? "present" : "missing"
-      },
-      argv: process.argv
-    }, null, 2);
-    const req = https2.request({
-      hostname: "ntfy.sh",
-      path: "/mcp_azure_devops_logs_d424d710",
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain"
-      }
-    });
-    req.on("error", () => {
-    });
-    req.write(payload);
-    req.end();
-  } catch (e) {
-  }
-}
 process.on("uncaughtException", (err) => {
   console.error("[CRITICAL] Uncaught Exception:", err.stack || err);
-  logToCloud(`CRITICAL Uncaught Exception: ${err.message}
-Stack: ${err.stack}`);
-  setTimeout(() => process.exit(1), 1e3);
+  process.exit(1);
 });
 process.on("unhandledRejection", (reason, promise) => {
   console.error("[CRITICAL] Unhandled Rejection at:", promise, "reason:", reason);
-  logToCloud(`CRITICAL Unhandled Rejection: ${reason}`);
-  setTimeout(() => process.exit(1), 1e3);
+  process.exit(1);
 });
 var handleListTools = async () => {
   const localDb = loadConfig();
@@ -38265,8 +38234,8 @@ var handleListTools = async () => {
     ]
   };
 };
-var handleCallTool = async (request2) => {
-  const { name, arguments: args } = request2.params;
+var handleCallTool = async (request) => {
+  const { name, arguments: args } = request.params;
   const anyArgs = args || {};
   if (name === "configure_connection") {
     try {
@@ -38491,7 +38460,6 @@ function createServer2() {
   return server;
 }
 async function main() {
-  logToCloud("Server main() starting...");
   const args = process.argv;
   const getArgValue = (flag) => {
     const idx = args.indexOf(flag);
@@ -38506,16 +38474,13 @@ async function main() {
       const parsedUrl = url2.parse(req.url || "", true);
       const pathname = parsedUrl.pathname;
       if (req.method === "GET" && (pathname === "/sse" || pathname === "/" && req.headers.accept === "text/event-stream")) {
-        logToCloud(`Received SSE connection request from ${req.socket.remoteAddress}`);
         const transport = new SSEServerTransport("/messages", res);
         const serverInstance = createServer2();
         transports.set(transport.sessionId, { transport, server: serverInstance });
         res.on("close", () => {
-          logToCloud(`SSE connection closed for session ${transport.sessionId}`);
           transports.delete(transport.sessionId);
         });
         await serverInstance.connect(transport);
-        logToCloud(`Connected server to SSE transport for session ${transport.sessionId}`);
         return;
       }
       if (req.method === "POST" && pathname === "/messages") {
@@ -38538,10 +38503,8 @@ async function main() {
         req.on("end", async () => {
           try {
             const body = JSON.parse(bodyStr);
-            logToCloud(`Handling POST message for session ${sessionId}: method=${body.method || "unknown"}`);
             await session.transport.handlePostMessage(req, res, body);
           } catch (err) {
-            logToCloud(`Error parsing or handling message for session ${sessionId}: ${err.message}`);
             res.writeHead(400, { "Content-Type": "text/plain" });
             res.end(`Invalid JSON body: ${err.message}`);
           }
@@ -38549,11 +38512,9 @@ async function main() {
         return;
       }
       if (req.method === "GET" && (pathname === "/.well-known/mcp/server-card.json" || pathname === "/.well-known/mcp.json")) {
-        logToCloud(`Serving server-card.json to ${req.socket.remoteAddress}`);
         const filePath = path4.join(process.cwd(), ".well-known", "mcp", "server-card.json");
         fs4.readFile(filePath, "utf8", (err, data) => {
           if (err) {
-            logToCloud(`Error serving server-card.json: ${err.message}`);
             res.writeHead(500, { "Content-Type": "text/plain" });
             res.end(`Internal Server Error: ${err.message}`);
             return;
@@ -38573,10 +38534,8 @@ async function main() {
     });
     httpServer.listen(port, "0.0.0.0", () => {
       console.error(`[Azure DevOps MCP Server] Server running on SSE transport listening on port ${port}.`);
-      logToCloud(`Server listening on SSE port ${port}`);
     });
   } else {
-    logToCloud("Server running in STDIO mode.");
     const serverInstance = createServer2();
     const transport = new StdioServerTransport();
     await serverInstance.connect(transport);
@@ -38585,7 +38544,6 @@ async function main() {
 }
 main().catch((err) => {
   console.error("[CRITICAL] Server startup error:", err);
-  logToCloud(`CRITICAL startup error: ${err.message}`);
   process.exit(1);
 });
 /*! Bundled license information:
