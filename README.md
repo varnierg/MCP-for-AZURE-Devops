@@ -9,6 +9,10 @@
 
 **Author:** Varnier Gatto (mcp_dev@jitime.com)
 
+> [!CAUTION]
+> **Important Warning on Deletions & API Permissions**:
+> This MCP server allows the AI assistant to perform **any** REST API call in Azure DevOps (including destructive operations like deleting repositories, builds, or work items).
+> **Please note that Azure DevOps does NOT keep a Recycle Bin / Trashcan for work items deleted via the REST API.** Once a work item (e.g., Bug, Task, User Story) is deleted via the API, it is permanently destroyed and cannot be restored. Use extreme caution when permitting deletion tasks.
 
 This is a **Model Context Protocol (MCP)** server that enables AI assistants (such as Claude Desktop, Antigravity, etc.) to interact directly with **Azure DevOps**.
 
@@ -30,6 +34,11 @@ It provides a rich suite of tools to manage Work Items (Bugs, User Stories, Task
 #### Configuration & Connection
 - `configure_connection`: Save credentials (URL, Username, PAT) for a specific organization/project.
 - `test_connection`: Verify connection and PAT validity for the default organization.
+
+#### Generic REST Client & API Directory
+- `call_api`: Execute arbitrary HTTP REST requests (GET, POST, PATCH, DELETE, etc.) against Azure DevOps.
+- `search_api_docs`: Search the offline API directory for matching endpoints or schemas.
+- `get_api_info`: Retrieve details of a specific endpoint schema, including required parameters.
 
 #### Work Item Tracking (WIT)
 - `get_work_item`: Retrieve details of a work item by ID.
@@ -161,6 +170,10 @@ To test the Azure DevOps MCP tools (Work Items, Git, Pipelines, and Identities),
 
 **Autore:** Varnier Gatto (mcp_dev@jitime.com)
 
+> [!CAUTION]
+> **Avviso Importante su Eliminazioni e Permessi API**:
+> Questo server MCP consente all'assistente AI di eseguire **qualsiasi** chiamata REST API in Azure DevOps (comprese operazioni distruttive come l'eliminazione di repository, build o work item).
+> **Si prega di notare che Azure DevOps NON conserva un Cestino per i work item eliminati tramite le API REST.** Una volta che un work item (es. Bug, Task, User Story) viene eliminato tramite l'API, viene distrutto in modo permanente e non può essere ripristinato. Prestare la massima attenzione quando si autorizzano compiti di eliminazione.
 
 Questo è un server **Model Context Protocol (MCP)** che consente ai modelli di intelligenza artificiale (come Claude Desktop, Antigravity, ecc.) di interagire direttamente con **Azure DevOps**.
 
@@ -182,6 +195,11 @@ Il server fornisce una ricca suite di strumenti per gestire Work Item (Bug, User
 #### Configurazione e Connessione
 - `configure_connection`: Configura le credenziali (URL, Username, PAT) per un'organizzazione o progetto.
 - `test_connection`: Verifica la connessione e la validità del PAT per l'organizzazione configurata di default.
+
+#### Client REST Generico & Elenco API (Directory)
+- `call_api`: Esegue qualsiasi richiesta REST HTTP (GET, POST, PATCH, DELETE, ecc.) verso Azure DevOps.
+- `search_api_docs`: Cerca all'interno dell'elenco API locale per trovare endpoint o schemi corrispondenti.
+- `get_api_info`: Recupera i dettagli sullo schema di uno specifico endpoint, inclusi i parametri richiesti.
 
 #### Gestione Work Items (WIT)
 - `get_work_item`: Recupera i dettagli di un determinato work item tramite ID.
