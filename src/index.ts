@@ -702,7 +702,7 @@ async function main() {
 
       // Serve well-known server card to skip dynamic scanning
       if (req.method === 'GET' && (pathname === '/.well-known/mcp/server-card.json' || pathname === '/.well-known/mcp.json')) {
-        const filePath = path.join(process.cwd(), '.well-known', 'mcp', 'server-card.json');
+        const filePath = path.join(__dirname, '..', '.well-known', 'mcp', 'server-card.json');
         fs.readFile(filePath, 'utf8', (err, data) => {
           if (err) {
             res.writeHead(500, { 'Content-Type': 'text/plain' });

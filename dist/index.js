@@ -38512,7 +38512,7 @@ async function main() {
         return;
       }
       if (req.method === "GET" && (pathname === "/.well-known/mcp/server-card.json" || pathname === "/.well-known/mcp.json")) {
-        const filePath = path4.join(process.cwd(), ".well-known", "mcp", "server-card.json");
+        const filePath = path4.join(__dirname, "..", ".well-known", "mcp", "server-card.json");
         fs4.readFile(filePath, "utf8", (err, data) => {
           if (err) {
             res.writeHead(500, { "Content-Type": "text/plain" });
