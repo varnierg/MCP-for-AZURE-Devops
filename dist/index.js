@@ -38460,8 +38460,15 @@ function createServer2() {
   return server;
 }
 async function main() {
-  if (process.env.PORT) {
-    const port = parseInt(process.env.PORT, 10);
+  const args = process.argv;
+  const getArgValue = (flag) => {
+    const idx = args.indexOf(flag);
+    return idx !== -1 && idx < args.length - 1 ? args[idx + 1] : void 0;
+  };
+  const argPort = getArgValue("--port");
+  const portStr = process.env.PORT || argPort;
+  if (portStr) {
+    const port = parseInt(portStr, 10);
     const transports = /* @__PURE__ */ new Map();
     const httpServer = http3.createServer(async (req, res) => {
       const parsedUrl = url2.parse(req.url || "", true);

@@ -638,8 +638,16 @@ function createServer(): Server {
 }
 
 async function main() {
-  if (process.env.PORT) {
-    const port = parseInt(process.env.PORT, 10);
+  const args = process.argv;
+  const getArgValue = (flag: string) => {
+    const idx = args.indexOf(flag);
+    return (idx !== -1 && idx < args.length - 1) ? args[idx + 1] : undefined;
+  };
+  const argPort = getArgValue('--port');
+  const portStr = process.env.PORT || argPort;
+
+  if (portStr) {
+    const port = parseInt(portStr, 10);
     const transports = new Map<string, { transport: SSEServerTransport; server: Server }>();
 
     const httpServer = http.createServer(async (req, res) => {

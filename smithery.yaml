@@ -40,6 +40,7 @@ commandFunction: |-
       command: 'node',
       args: [
         '/app/dist/index.js',
+        '--port', '8080',
         '--org', c.organization || '',
         '--username', c.username || '',
         '--pat', c.pat || '',
