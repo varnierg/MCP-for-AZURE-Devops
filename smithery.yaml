@@ -26,6 +26,7 @@ commandFunction: |-
       command: 'node',
       args: ['/app/dist/index.js'],
       env: {
+        ...process.env,
         AZURE_DEVOPS_ORG: c.organization || '',
         AZURE_DEVOPS_USERNAME: c.username || '',
         AZURE_DEVOPS_PAT: c.pat || '',
