@@ -36,21 +36,18 @@ configSchema:
 commandFunction: |-
   (config) => {
     const c = config || {};
-    const env = {
-      AZURE_DEVOPS_ORG: c.organization || '',
-      AZURE_DEVOPS_USERNAME: c.username || '',
-      AZURE_DEVOPS_PAT: c.pat || '',
-      AZURE_DEVOPS_PROJECT: c.defaultProject || ''
-    };
-    if (typeof process !== 'undefined' && process.env && process.env.PORT) {
-      env.PORT = process.env.PORT;
-    }
     return {
       command: 'node',
-      args: ['/app/dist/index.js'],
-      env: env
+      args: [
+        '/app/dist/index.js',
+        '--org', c.organization || '',
+        '--username', c.username || '',
+        '--pat', c.pat || '',
+        '--project', c.defaultProject || ''
+      ]
     };
   }
+
 exampleConfig:
   organization: "my-org"
   username: "user@email.com"

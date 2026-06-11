@@ -32599,10 +32599,19 @@ function addProjectConfig(url3, username, pat) {
   return { organization, project };
 }
 function getCredentialsForProject(projectPath, orgName) {
-  const envOrg = process.env.AZURE_DEVOPS_ORG || process.env.AZURE_DEVOPS_ORGANIZATION;
-  const envUsername = process.env.AZURE_DEVOPS_USERNAME;
-  const envPat = process.env.AZURE_DEVOPS_PAT || process.env.AZURE_DEVOPS_TOKEN;
-  const envProject = process.env.AZURE_DEVOPS_PROJECT;
+  const args = process.argv;
+  const getArgValue = (flag) => {
+    const idx = args.indexOf(flag);
+    return idx !== -1 && idx < args.length - 1 ? args[idx + 1] : void 0;
+  };
+  const argOrg = getArgValue("--org") || getArgValue("--organization");
+  const argUsername = getArgValue("--username");
+  const argPat = getArgValue("--pat") || getArgValue("--token");
+  const argProject = getArgValue("--project") || getArgValue("--defaultProject");
+  const envOrg = argOrg || process.env.AZURE_DEVOPS_ORG || process.env.AZURE_DEVOPS_ORGANIZATION;
+  const envUsername = argUsername || process.env.AZURE_DEVOPS_USERNAME;
+  const envPat = argPat || process.env.AZURE_DEVOPS_PAT || process.env.AZURE_DEVOPS_TOKEN;
+  const envProject = argProject || process.env.AZURE_DEVOPS_PROJECT;
   if (envOrg && envUsername && envPat) {
     if (!orgName || orgName.toLowerCase() === envOrg.toLowerCase()) {
       return {
