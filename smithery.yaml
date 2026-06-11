@@ -46,7 +46,10 @@ commandFunction: |-
         '--username', c.username || '',
         '--pat', c.pat || '',
         '--project', c.defaultProject || ''
-      ]
+      ],
+      env: {
+        PORT: '8080'
+      }
     };
   }
 
