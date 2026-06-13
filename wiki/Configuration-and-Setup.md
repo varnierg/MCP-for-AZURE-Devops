@@ -41,9 +41,19 @@ To ensure your PAT and username are not exposed in plaintext configuration files
 
 ---
 
-## 🧙‍♂️ 3. Interactive Local Setup
+## 🧙‍♂️ 3. Install via Smithery
 
-You can configure the server interactively by running the setup script:
+The easiest way to install and configure Azure DevOps MCP Server for Claude Desktop is automatically via [Smithery](https://smithery.ai/servers/github-y8ge/mcp-azure-devops):
+
+```bash
+npx -y @smithery/cli install github-y8ge/mcp-azure-devops --client claude
+```
+
+---
+
+## 💻 4. Interactive Manual Setup
+
+You can configure the server interactively by cloning the repository and running the setup script:
 
 ### Windows (Command Prompt / PowerShell)
 Run the pre-configured batch script in the root directory:

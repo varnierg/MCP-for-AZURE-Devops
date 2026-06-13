@@ -1,5 +1,7 @@
 # Azure DevOps MCP Server
 
+[![smithery badge](https://smithery.ai/badge/github-y8ge/mcp-azure-devops)](https://smithery.ai/servers/github-y8ge/mcp-azure-devops)
+
 *Language selector: [English](#english) | [Italiano](#italiano)*
 
 ---
@@ -75,7 +77,17 @@ It provides a rich suite of tools to manage Work Items (Bugs, User Stories, Task
 
 ---
 
-### Installation
+### Installing via Smithery
+
+To install Azure DevOps MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/servers/github-y8ge/mcp-azure-devops):
+
+```bash
+npx -y @smithery/cli install github-y8ge/mcp-azure-devops --client claude
+```
+
+---
+
+### Manual Installation
 
 1. Clone this repository to your local machine.
 2. Open your terminal in the project directory and install the required dependencies:
@@ -236,7 +248,17 @@ Il server fornisce una ricca suite di strumenti per gestire Work Item (Bug, User
 
 ---
 
-### Installazione
+### Installazione tramite Smithery
+
+Per installare automaticamente Azure DevOps MCP Server per Claude Desktop tramite [Smithery](https://smithery.ai/servers/github-y8ge/mcp-azure-devops):
+
+```bash
+npx -y @smithery/cli install github-y8ge/mcp-azure-devops --client claude
+```
+
+---
+
+### Installazione Manuale
 
 1. Clona questo repository sul tuo computer locale.
 2. Apri il terminale nella cartella del progetto ed esegui il comando seguente per installare le dipendenze richieste:

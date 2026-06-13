@@ -1,5 +1,7 @@
 # Welcome to the Azure DevOps MCP Server Wiki
 
+[![smithery badge](https://smithery.ai/badge/github-y8ge/mcp-azure-devops)](https://smithery.ai/servers/github-y8ge/mcp-azure-devops)
+
 This wiki contains detailed documentation and reference guides for the **Azure DevOps Model Context Protocol (MCP)** server.
 
 > [!CAUTION]
