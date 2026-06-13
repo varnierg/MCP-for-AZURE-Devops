@@ -17,6 +17,10 @@ startCommand:
   type: stdio
 configSchema:
   type: object
+  required:
+    - organization
+    - username
+    - pat
   properties:
     organization:
       type: string

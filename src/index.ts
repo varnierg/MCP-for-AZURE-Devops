@@ -25,13 +25,7 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
-const handleListTools = async () => {
-  // Load local DB version to include in descriptions
-  const localDb = loadConfig();
-  const dbVer = '7.1'; // fallback
-
-  return {
-    tools: [
+const TOOLS = [
       {
         name: 'configure_connection',
         description: 'Configures Azure DevOps credentials (Username & PAT) for a specific organization/project URL. Must be called first if not configured.',
@@ -57,7 +51,7 @@ const handleListTools = async () => {
       },
       {
         name: 'call_api',
-        description: `Executes a generic Azure DevOps REST API call. Supports ALL DevOps endpoints. (Default API Version: ${dbVer})`,
+        description: 'Executes a generic Azure DevOps REST API call. Supports ALL DevOps endpoints. (Default API Version: 7.1)',
         inputSchema: {
           type: 'object',
           properties: {
@@ -364,7 +358,11 @@ const handleListTools = async () => {
           required: ['query']
         }
       }
-    ]
+];
+
+const handleListTools = async () => {
+  return {
+    tools: TOOLS
   };
 };
 
