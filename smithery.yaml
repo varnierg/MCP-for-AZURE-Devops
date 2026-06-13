@@ -12,10 +12,7 @@ tags:
   - git
   - work-items
   - pipelines
-runtime: container
-build:
-  dockerfile: Dockerfile
-  dockerBuildPath: .
+
 startCommand:
   type: stdio
 configSchema:
