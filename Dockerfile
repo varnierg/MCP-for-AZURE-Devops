@@ -28,8 +28,6 @@ COPY .well-known ./.well-known
 
 # Set Node production environment
 ENV NODE_ENV=production
-ENV PORT=8080
-EXPOSE 8080
 
 # Run the bundled application using the absolute path
 CMD ["node", "/app/dist/index.js"]
