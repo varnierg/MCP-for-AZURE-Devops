@@ -34,6 +34,7 @@ configSchema:
     defaultProject:
       type: string
       description: (Optional) The default project to use if not specified in tool calls
+      default: ""
 commandFunction: |-
   (config) => {
     const c = config || {};
