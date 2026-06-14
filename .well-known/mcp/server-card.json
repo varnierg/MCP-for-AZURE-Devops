@@ -5,7 +5,7 @@
   },
   "tools": [
     {
-      "name": "configure_connection",
+      "name": "connection.configure",
       "description": "Configures Azure DevOps credentials (Username & PAT) for a specific organization/project URL. Must be called first if not configured.",
       "inputSchema": {
         "type": "object",
@@ -28,10 +28,26 @@
           "username",
           "token"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Confirmation message of the configuration success"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "annotations": {
+        "title": "Configure Connection",
+        "idempotentHint": true
       }
     },
     {
-      "name": "test_connection",
+      "name": "connection.test",
       "description": "Verifies connection to Azure DevOps for a configured organization.",
       "inputSchema": {
         "type": "object",
@@ -41,10 +57,31 @@
             "description": "Optional organization name. If omitted, uses the default organization."
           }
         }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Connection status (e.g. SUCCESS)"
+          },
+          "message": {
+            "type": "string",
+            "description": "Detailed success message with authorized user and API version"
+          }
+        },
+        "required": [
+          "status",
+          "message"
+        ]
+      },
+      "annotations": {
+        "title": "Test Connection",
+        "idempotentHint": true
       }
     },
     {
-      "name": "call_api",
+      "name": "api.call",
       "description": "Executes a generic Azure DevOps REST API call. Supports ALL DevOps endpoints. (Default API Version: 7.1)",
       "inputSchema": {
         "type": "object",
@@ -85,10 +122,17 @@
           "method",
           "path"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "The raw JSON response from the Azure DevOps API"
+      },
+      "annotations": {
+        "title": "Call API"
       }
     },
     {
-      "name": "search_api_docs",
+      "name": "api.docs.search",
       "description": "Searches the local database of Azure DevOps APIs and parameters to find the correct endpoints offline.",
       "inputSchema": {
         "type": "object",
@@ -105,10 +149,30 @@
         "required": [
           "query"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "endpoints": {
+            "type": "array",
+            "description": "List of matching API endpoints with description, parameters, and template URL",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "endpoints"
+        ]
+      },
+      "annotations": {
+        "title": "Search API Documentation",
+        "readOnlyHint": true,
+        "idempotentHint": true
       }
     },
     {
-      "name": "get_api_info",
+      "name": "api.info.get",
       "description": "Gets full documentation for a specific Azure DevOps API endpoint. Checks the local database first and falls back to Microsoft specs online.",
       "inputSchema": {
         "type": "object",
@@ -121,7 +185,8 @@
               "PUT",
               "PATCH",
               "DELETE"
-            ]
+            ],
+            "description": "HTTP method of the API endpoint"
           },
           "path": {
             "type": "string",
@@ -132,10 +197,40 @@
           "method",
           "path"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "description": "HTTP method"
+          },
+          "path": {
+            "type": "string",
+            "description": "API path template"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the endpoint"
+          },
+          "parameters": {
+            "type": "array",
+            "description": "List of path, query, and body parameters"
+          }
+        },
+        "required": [
+          "method",
+          "path"
+        ]
+      },
+      "annotations": {
+        "title": "Get API Info",
+        "readOnlyHint": true,
+        "idempotentHint": true
       }
     },
     {
-      "name": "get_work_item",
+      "name": "work_item.get",
       "description": "Retrieves details for a specific Azure DevOps work item by ID.",
       "inputSchema": {
         "type": "object",
@@ -156,10 +251,32 @@
         "required": [
           "id"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "The work item ID"
+          },
+          "fields": {
+            "type": "object",
+            "description": "Key-value pairs of all work item fields"
+          }
+        },
+        "required": [
+          "id",
+          "fields"
+        ]
+      },
+      "annotations": {
+        "title": "Get Work Item",
+        "readOnlyHint": true,
+        "idempotentHint": true
       }
     },
     {
-      "name": "create_work_item",
+      "name": "work_item.create",
       "description": "Creates a new work item (Bug, Task, User Story) in Azure DevOps.",
       "inputSchema": {
         "type": "object",
@@ -193,10 +310,29 @@
           "type",
           "title"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "The newly created work item ID"
+          },
+          "fields": {
+            "type": "object",
+            "description": "Key-value pairs of the work item fields"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "annotations": {
+        "title": "Create Work Item"
       }
     },
     {
-      "name": "update_work_item",
+      "name": "work_item.update",
       "description": "Updates field values on an existing work item.",
       "inputSchema": {
         "type": "object",
@@ -222,10 +358,29 @@
           "id",
           "fields"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "The updated work item ID"
+          },
+          "fields": {
+            "type": "object",
+            "description": "Key-value pairs of the updated fields"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "annotations": {
+        "title": "Update Work Item"
       }
     },
     {
-      "name": "query_work_items",
+      "name": "work_item.query",
       "description": "Searches work items using Work Item Query Language (WIQL) and returns batch details.",
       "inputSchema": {
         "type": "object",
@@ -246,10 +401,30 @@
         "required": [
           "wiql"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "workItems": {
+            "type": "array",
+            "description": "List of matching work items with their fields and IDs",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "workItems"
+        ]
+      },
+      "annotations": {
+        "title": "Query Work Items",
+        "readOnlyHint": true,
+        "idempotentHint": true
       }
     },
     {
-      "name": "add_work_item_comment",
+      "name": "work_item.comment.add",
       "description": "Adds a new discussion comment to a work item.",
       "inputSchema": {
         "type": "object",
@@ -275,10 +450,26 @@
           "id",
           "text"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "The comment ID"
+          },
+          "text": {
+            "type": "string",
+            "description": "The comment content"
+          }
+        }
+      },
+      "annotations": {
+        "title": "Add Work Item Comment"
       }
     },
     {
-      "name": "link_work_item",
+      "name": "work_item.link",
       "description": "Links two work items together using a relation type (e.g., Parent/Child, Duplicate, Related).",
       "inputSchema": {
         "type": "object",
@@ -309,10 +500,17 @@
           "targetId",
           "relationType"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "JSON response containing the updated work item relations"
+      },
+      "annotations": {
+        "title": "Link Work Items"
       }
     },
     {
-      "name": "list_repositories",
+      "name": "git.repository.list",
       "description": "Lists all Git repositories in the configured project.",
       "inputSchema": {
         "type": "object",
@@ -326,10 +524,30 @@
             "description": "Optional project override"
           }
         }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "repositories": {
+            "type": "array",
+            "description": "List of repositories in the project",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "repositories"
+        ]
+      },
+      "annotations": {
+        "title": "List Repositories",
+        "readOnlyHint": true,
+        "idempotentHint": true
       }
     },
     {
-      "name": "get_git_file",
+      "name": "git.file.get",
       "description": "Reads content of a file from an Azure DevOps Git repository.",
       "inputSchema": {
         "type": "object",
@@ -359,10 +577,27 @@
           "repositoryId",
           "path"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "The raw file content text"
+          }
+        },
+        "required": [
+          "content"
+        ]
+      },
+      "annotations": {
+        "title": "Get Git File",
+        "readOnlyHint": true,
+        "idempotentHint": true
       }
     },
     {
-      "name": "create_git_push",
+      "name": "git.push.create",
       "description": "Pushes file changes (adds, modifications, deletes) directly to a repository branch.",
       "inputSchema": {
         "type": "object",
@@ -381,6 +616,7 @@
           },
           "changes": {
             "type": "array",
+            "description": "Array of file changes to apply in this commit",
             "items": {
               "type": "object",
               "properties": {
@@ -390,7 +626,8 @@
                     "add",
                     "edit",
                     "delete"
-                  ]
+                  ],
+                  "description": "Type of change: add, edit, or delete"
                 },
                 "path": {
                   "type": "string",
@@ -422,10 +659,17 @@
           "commitMessage",
           "changes"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "JSON response from the git push operation"
+      },
+      "annotations": {
+        "title": "Create Git Push"
       }
     },
     {
-      "name": "create_pull_request",
+      "name": "git.pull_request.create",
       "description": "Creates a Pull Request in a Git repository.",
       "inputSchema": {
         "type": "object",
@@ -465,10 +709,17 @@
           "targetBranch",
           "title"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "JSON response of the newly created pull request"
+      },
+      "annotations": {
+        "title": "Create Pull Request"
       }
     },
     {
-      "name": "get_pull_request",
+      "name": "git.pull_request.get",
       "description": "Gets details and status of a Pull Request.",
       "inputSchema": {
         "type": "object",
@@ -494,10 +745,19 @@
           "repositoryId",
           "pullRequestId"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "JSON response of the pull request details"
+      },
+      "annotations": {
+        "title": "Get Pull Request",
+        "readOnlyHint": true,
+        "idempotentHint": true
       }
     },
     {
-      "name": "update_pull_request",
+      "name": "git.pull_request.update",
       "description": "Updates a Pull Request status (active, abandoned, completed).",
       "inputSchema": {
         "type": "object",
@@ -533,10 +793,17 @@
           "pullRequestId",
           "status"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "JSON response of the updated pull request"
+      },
+      "annotations": {
+        "title": "Update Pull Request"
       }
     },
     {
-      "name": "create_pull_request_thread",
+      "name": "git.pull_request.thread.create",
       "description": "Creates an inline code review comment thread on a file and line number in a PR.",
       "inputSchema": {
         "type": "object",
@@ -577,10 +844,17 @@
           "line",
           "content"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "JSON response of the newly created thread and comments"
+      },
+      "annotations": {
+        "title": "Create Pull Request Thread"
       }
     },
     {
-      "name": "list_pull_request_threads",
+      "name": "git.pull_request.thread.list",
       "description": "Retrieves all threads and comments on a PR.",
       "inputSchema": {
         "type": "object",
@@ -606,10 +880,30 @@
           "repositoryId",
           "pullRequestId"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "threads": {
+            "type": "array",
+            "description": "List of PR comment threads",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "threads"
+        ]
+      },
+      "annotations": {
+        "title": "List Pull Request Threads",
+        "readOnlyHint": true,
+        "idempotentHint": true
       }
     },
     {
-      "name": "run_pipeline",
+      "name": "pipeline.run",
       "description": "Triggers a run of a pipeline.",
       "inputSchema": {
         "type": "object",
@@ -634,10 +928,17 @@
         "required": [
           "pipelineId"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "JSON response of the newly started run"
+      },
+      "annotations": {
+        "title": "Run Pipeline"
       }
     },
     {
-      "name": "get_pipeline_run",
+      "name": "pipeline.run.get",
       "description": "Retrieves status of a pipeline run.",
       "inputSchema": {
         "type": "object",
@@ -663,10 +964,19 @@
           "pipelineId",
           "runId"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "JSON response of the run status details"
+      },
+      "annotations": {
+        "title": "Get Pipeline Run",
+        "readOnlyHint": true,
+        "idempotentHint": true
       }
     },
     {
-      "name": "get_pipeline_run_logs",
+      "name": "pipeline.run.logs.get",
       "description": "Retrieves combined log content for a pipeline run.",
       "inputSchema": {
         "type": "object",
@@ -692,10 +1002,27 @@
           "pipelineId",
           "runId"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "logs": {
+            "type": "string",
+            "description": "The pipeline run log contents"
+          }
+        },
+        "required": [
+          "logs"
+        ]
+      },
+      "annotations": {
+        "title": "Get Pipeline Run Logs",
+        "readOnlyHint": true,
+        "idempotentHint": true
       }
     },
     {
-      "name": "search_identities",
+      "name": "identity.search",
       "description": "Searches for users or groups in the organization by name or email.",
       "inputSchema": {
         "type": "object",
@@ -712,6 +1039,26 @@
         "required": [
           "query"
         ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "identities": {
+            "type": "array",
+            "description": "List of matching identities",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "identities"
+        ]
+      },
+      "annotations": {
+        "title": "Search Identities",
+        "readOnlyHint": true,
+        "idempotentHint": true
       }
     }
   ]
