@@ -3,9 +3,9 @@
 Azure DevOps has a massive API surface consisting of thousands of endpoints. While this MCP server exposes 20+ specialized tools for common operations (Git, Work Items, Pipelines, Identities), it also provides a **Generic REST Client** to invoke **any** Azure DevOps REST API endpoint.
 
 > [!CAUTION]
-> **CRITICAL WARNING: Destructive Actions via `api.call`**
-> * Using the `api.call` tool with the `DELETE` method allows you to delete repositories, build definitions, pipelines, or work items permanently.
-> * **Work items deleted via `api.call` (with the DELETE method) do NOT go to a Recycle Bin or Trashcan.** They are instantly and permanently destroyed from your Azure DevOps project. Use this tool with extreme care.
+> **CRITICAL WARNING: Destructive Actions via `api.client.call`**
+> * Using the `api.client.call` tool with the `DELETE` method allows you to delete repositories, build definitions, pipelines, or work items permanently.
+> * **Work items deleted via `api.client.call` (with the DELETE method) do NOT go to a Recycle Bin or Trashcan.** They are instantly and permanently destroyed from your Azure DevOps project. Use this tool with extreme care.
 
 ---
 
@@ -16,13 +16,13 @@ To help you discover and call arbitrary endpoints, the server includes three too
 ```mermaid
 graph TD
     A[api.docs.search] -->|Finds endpoint paths & summaries| B[api.info.get]
-    B -->|Provides schema, parameters & HTTP method| C[api.call]
+    B -->|Provides schema, parameters & HTTP method| C[api.client.call]
     C -->|Executes the request and returns JSON| D[Azure DevOps REST API]
 ```
 
 1. **`api.docs.search`**: Performs high-speed offline searches over a local directory of 1,000+ REST API endpoints.
 2. **`api.info.get`**: Retrieves full parameter schemas, request bodies, and Microsoft documentation links for a specific endpoint (falls back to fetching from Microsoft servers online if missing).
-3. **`api.call`**: Makes the actual HTTP request (GET, POST, PUT, PATCH, DELETE) to the endpoint.
+3. **`api.client.call`**: Makes the actual HTTP request (GET, POST, PUT, PATCH, DELETE) to the endpoint.
 
 ---
 
@@ -71,7 +71,7 @@ Once you have the path, inspect its parameters and body using `api.info.get`:
 
 ## 🚀 Step 3: Executing the API Call
 
-Now you can invoke `api.call` to list all branches in a repository:
+Now you can invoke `api.client.call` to list all branches in a repository:
 
 * **Parameters**:
   * `method`: `"GET"`
@@ -88,7 +88,7 @@ If you must delete a resource, double-check that you are targeting the correct r
 
 ### Example: Permanently Deleting a Work Item (No Trashcan!)
 To permanently delete work item with ID `999`:
-* **Tool**: `api.call`
+* **Tool**: `api.client.call`
 * **Parameters**:
   * `method`: `"DELETE"`
   * `path`: `"/_apis/wit/workitems/999"`

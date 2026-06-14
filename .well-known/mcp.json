@@ -5,7 +5,7 @@
   },
   "tools": [
     {
-      "name": "connection.configure",
+      "name": "connection.settings.configure",
       "description": "Configures Azure DevOps credentials (Username & PAT) for a specific organization/project URL. Must be called first if not configured.",
       "inputSchema": {
         "type": "object",
@@ -47,7 +47,7 @@
       }
     },
     {
-      "name": "connection.test",
+      "name": "connection.settings.test",
       "description": "Verifies connection to Azure DevOps for a configured organization.",
       "inputSchema": {
         "type": "object",
@@ -81,7 +81,7 @@
       }
     },
     {
-      "name": "api.call",
+      "name": "api.client.call",
       "description": "Executes a generic Azure DevOps REST API call. Supports ALL DevOps endpoints. (Default API Version: 7.1)",
       "inputSchema": {
         "type": "object",
@@ -230,7 +230,7 @@
       }
     },
     {
-      "name": "workitem.get",
+      "name": "workitem.item.get",
       "description": "Retrieves details for a specific Azure DevOps work item by ID.",
       "inputSchema": {
         "type": "object",
@@ -276,7 +276,7 @@
       }
     },
     {
-      "name": "workitem.create",
+      "name": "workitem.item.create",
       "description": "Creates a new work item (Bug, Task, User Story) in Azure DevOps.",
       "inputSchema": {
         "type": "object",
@@ -332,7 +332,7 @@
       }
     },
     {
-      "name": "workitem.update",
+      "name": "workitem.item.update",
       "description": "Updates field values on an existing work item.",
       "inputSchema": {
         "type": "object",
@@ -380,7 +380,7 @@
       }
     },
     {
-      "name": "workitem.query",
+      "name": "workitem.query.run",
       "description": "Searches work items using Work Item Query Language (WIQL) and returns batch details.",
       "inputSchema": {
         "type": "object",
@@ -469,7 +469,7 @@
       }
     },
     {
-      "name": "workitem.link",
+      "name": "workitem.link.create",
       "description": "Links two work items together using a relation type (e.g., Parent/Child, Duplicate, Related).",
       "inputSchema": {
         "type": "object",
@@ -510,7 +510,7 @@
       }
     },
     {
-      "name": "git.repository.list",
+      "name": "git.repo.list",
       "description": "Lists all Git repositories in the configured project.",
       "inputSchema": {
         "type": "object",
@@ -669,7 +669,7 @@
       }
     },
     {
-      "name": "git.pullrequest.create",
+      "name": "git.pr.create",
       "description": "Creates a Pull Request in a Git repository.",
       "inputSchema": {
         "type": "object",
@@ -719,7 +719,7 @@
       }
     },
     {
-      "name": "git.pullrequest.get",
+      "name": "git.pr.get",
       "description": "Gets details and status of a Pull Request.",
       "inputSchema": {
         "type": "object",
@@ -757,7 +757,7 @@
       }
     },
     {
-      "name": "git.pullrequest.update",
+      "name": "git.pr.update",
       "description": "Updates a Pull Request status (active, abandoned, completed).",
       "inputSchema": {
         "type": "object",
@@ -803,7 +803,7 @@
       }
     },
     {
-      "name": "git.pullrequest.thread.create",
+      "name": "git.pr.comment_add",
       "description": "Creates an inline code review comment thread on a file and line number in a PR.",
       "inputSchema": {
         "type": "object",
@@ -854,7 +854,7 @@
       }
     },
     {
-      "name": "git.pullrequest.thread.list",
+      "name": "git.pr.comment_list",
       "description": "Retrieves all threads and comments on a PR.",
       "inputSchema": {
         "type": "object",
@@ -903,7 +903,7 @@
       }
     },
     {
-      "name": "pipeline.run",
+      "name": "pipeline.run.start",
       "description": "Triggers a run of a pipeline.",
       "inputSchema": {
         "type": "object",
@@ -976,7 +976,7 @@
       }
     },
     {
-      "name": "pipeline.run.logs.get",
+      "name": "pipeline.run.logs",
       "description": "Retrieves combined log content for a pipeline run.",
       "inputSchema": {
         "type": "object",
@@ -1022,7 +1022,7 @@
       }
     },
     {
-      "name": "identity.search",
+      "name": "identity.user.search",
       "description": "Searches for users or groups in the organization by name or email.",
       "inputSchema": {
         "type": "object",
