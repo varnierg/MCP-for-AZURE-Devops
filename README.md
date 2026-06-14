@@ -43,22 +43,22 @@ It provides a rich suite of tools to manage Work Items (Bugs, User Stories, Task
 - `api.info.get`: Retrieve details of a specific endpoint schema, including required parameters.
 
 #### Work Item Tracking (WIT)
-- `work_item.get`: Retrieve details of a work item by ID.
-- `work_item.create`: Create a new work item (Bug, Task, User Story).
-- `work_item.update`: Update fields of an existing work item.
-- `work_item.query`: Run complex searches using the **WIQL** (Work Item Query Language) format.
-- `work_item.comment.add`: Add discussion comments to a work item.
-- `work_item.link`: Link two work items (e.g., Parent/Child, Related, Duplicate).
+- `workitem.get`: Retrieve details of a work item by ID.
+- `workitem.create`: Create a new work item (Bug, Task, User Story).
+- `workitem.update`: Update fields of an existing work item.
+- `workitem.query`: Run complex searches using the **WIQL** (Work Item Query Language) format.
+- `workitem.comment.add`: Add discussion comments to a work item.
+- `workitem.link`: Link two work items (e.g., Parent/Child, Related, Duplicate).
 
 #### Git Integration
 - `git.repository.list`: List Git repositories within the configured project.
 - `git.file.get`: Read file contents from a specific repository and branch (default: `main`).
 - `git.push.create`: Commit and push file modifications, additions, or deletions directly to a remote branch.
-- `git.pull_request.create`: Create a new Pull Request.
-- `git.pull_request.get`: Retrieve Pull Request status and details.
-- `git.pull_request.update`: Update Pull Request status (e.g., to `completed`, `abandoned`, `active`).
-- `git.pull_request.thread.create`: Create review comments on specific files and lines inside a PR.
-- `git.pull_request.thread.list`: Retrieve all comment threads for a PR.
+- `git.pullrequest.create`: Create a new Pull Request.
+- `git.pullrequest.get`: Retrieve Pull Request status and details.
+- `git.pullrequest.update`: Update Pull Request status (e.g., to `completed`, `abandoned`, `active`).
+- `git.pullrequest.thread.create`: Create review comments on specific files and lines inside a PR.
+- `git.pullrequest.thread.list`: Retrieve all comment threads for a PR.
 
 #### Pipeline Management
 - `pipeline.run`: Trigger a pipeline run with optional parameters.
@@ -214,22 +214,22 @@ Il server fornisce una ricca suite di strumenti per gestire Work Item (Bug, User
 - `api.info.get`: Recupera i dettagli sullo schema di uno specifico endpoint, inclusi i parametri richiesti.
 
 #### Gestione Work Items (WIT)
-- `work_item.get`: Recupera i dettagli di un determinato work item tramite ID.
-- `work_item.create`: Crea un nuovo work item (Bug, Task, User Story).
-- `work_item.update`: Aggiorna i campi di un work item esistente.
-- `work_item.query`: Esegue ricerche complesse tramite il linguaggio di query **WIQL** (Work Item Query Language).
-- `work_item.comment.add`: Aggiunge commenti all'area di discussione di un work item.
-- `work_item.link`: Collega due work item tra loro (es. Parent/Child, correlati, duplicati).
+- `workitem.get`: Recupera i dettagli di un determinato work item tramite ID.
+- `workitem.create`: Crea un nuovo work item (Bug, Task, User Story).
+- `workitem.update`: Aggiorna i campi di un work item esistente.
+- `workitem.query`: Esegue ricerche complesse tramite il linguaggio di query **WIQL** (Work Item Query Language).
+- `workitem.comment.add`: Aggiunge commenti all'area di discussione di un work item.
+- `workitem.link`: Collega due work item tra loro (es. Parent/Child, correlati, duplicati).
 
 #### Integrazione Git
 - `git.repository.list`: Elenca i repository Git presenti nel progetto configurato.
 - `git.file.get`: Legge il contenuto di un file direttamente da un repository e da un ramo specifico (default: `main`).
 - `git.push.create`: Consente di effettuare commit/push di modifiche (aggiunta, modifica, eliminazione di file) direttamente sul server remoto.
-- `git.pull_request.create`: Crea una nuova Pull Request.
-- `git.pull_request.get`: Legge lo stato e i dettagli di una specifica Pull Request.
-- `git.pull_request.update`: Modifica lo stato di una Pull Request (es. impostandolo su `completed`, `abandoned`, `active`).
-- `git.pull_request.thread.create`: Crea discussioni/commenti specifici per la revisione del codice su righe precise di un file in una PR.
-- `git.pull_request.thread.list`: Elenca tutti i thread e commenti relativi a una PR.
+- `git.pullrequest.create`: Crea una nuova Pull Request.
+- `git.pullrequest.get`: Legge lo stato e i dettagli di una specifica Pull Request.
+- `git.pullrequest.update`: Modifica lo stato di una Pull Request (es. impostandolo su `completed`, `abandoned`, `active`).
+- `git.pullrequest.thread.create`: Crea discussioni/commenti specifici per la revisione del codice su righe precise di un file in una PR.
+- `git.pullrequest.thread.list`: Elenca tutti i thread e commenti relativi a una PR.
 
 #### Monitoraggio Pipelines
 - `pipeline.run`: Avvia una pipeline specificando eventuali variabili di runtime.

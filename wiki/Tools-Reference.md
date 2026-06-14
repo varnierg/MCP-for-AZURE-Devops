@@ -4,7 +4,7 @@ This page lists all **23 tools** exposed by the Azure DevOps MCP server, grouped
 
 > [!CAUTION]
 > **CRITICAL WARNING: Destructive Actions & Work Item Deletions**
-> * Tools that modify data (e.g. `git.push.create`, `work_item.update`, `git.pull_request.update`) and the generic client `api.call` can perform destructive operations.
+> * Tools that modify data (e.g. `git.push.create`, `workitem.update`, `git.pullrequest.update`) and the generic client `api.call` can perform destructive operations.
 > * **Azure DevOps does NOT keep a recycle bin or trashcan for work items deleted via the REST API.** Once deleted via the API, a work item is permanently lost and cannot be recovered. Ensure you double-check any deletion actions.
 
 ---
@@ -68,7 +68,7 @@ Gets documentation for a specific API endpoint. Checks the local database first 
 
 ## 3. Work Item Tracking (WIT)
 
-### `work_item.get`
+### `workitem.get`
 Retrieves details for a specific Azure DevOps work item by ID.
 * **Parameters**:
   * `id` (number, **required**): Work Item ID.
@@ -76,7 +76,7 @@ Retrieves details for a specific Azure DevOps work item by ID.
   * `project` (string, optional): Project override.
 * **Output**: The work item object, including field values (System.Title, System.State, System.Description, etc.) and relations.
 
-### `work_item.create`
+### `workitem.create`
 Creates a new work item in Azure DevOps.
 * **Parameters**:
   * `type` (string, **required**): Work item type (e.g., `"Bug"`, `"Task"`, `"User Story"`).
@@ -87,7 +87,7 @@ Creates a new work item in Azure DevOps.
   * `project` (string, optional): Project override.
 * **Output**: The newly created work item details including its ID.
 
-### `work_item.update`
+### `workitem.update`
 Updates field values on an existing work item.
 * **Parameters**:
   * `id` (number, **required**): Work Item ID.
@@ -96,7 +96,7 @@ Updates field values on an existing work item.
   * `project` (string, optional): Project override.
 * **Output**: The updated work item details.
 
-### `work_item.query`
+### `workitem.query`
 Searches work items using Work Item Query Language (WIQL) and returns batch details.
 * **Parameters**:
   * `wiql` (string, **required**): WIQL query string (e.g. `Select [System.Id] From WorkItems Where [System.WorkItemType] = 'Bug'`).
@@ -104,7 +104,7 @@ Searches work items using Work Item Query Language (WIQL) and returns batch deta
   * `project` (string, optional): Project override.
 * **Output**: A list of matching work items with their ID, Type, Title, State, and Assigned To fields.
 
-### `work_item.comment.add`
+### `workitem.comment.add`
 Adds a discussion comment to a work item.
 * **Parameters**:
   * `id` (number, **required**): Work Item ID.
@@ -113,7 +113,7 @@ Adds a discussion comment to a work item.
   * `project` (string, optional): Project override.
 * **Output**: The added comment details.
 
-### `work_item.link`
+### `workitem.link`
 Links two work items together using a relation type.
 * **Parameters**:
   * `sourceId` (number, **required**): Source Work Item ID.
@@ -159,7 +159,7 @@ Pushes file changes (additions, modifications, deletions) directly to a reposito
   * `project` (string, optional): Project override.
 * **Output**: Push ID and commit details.
 
-### `git.pull_request.create`
+### `git.pullrequest.create`
 Creates a Pull Request in a Git repository.
 * **Parameters**:
   * `repositoryId` (string, **required**): Name or ID of the repository.
@@ -171,7 +171,7 @@ Creates a Pull Request in a Git repository.
   * `project` (string, optional): Project override.
 * **Output**: Pull Request details including ID, URL, and Status.
 
-### `git.pull_request.get`
+### `git.pullrequest.get`
 Gets details and status of a Pull Request.
 * **Parameters**:
   * `repositoryId` (string, **required**): Name or ID of the repository.
@@ -180,7 +180,7 @@ Gets details and status of a Pull Request.
   * `project` (string, optional): Project override.
 * **Output**: Pull Request details, status, merge status, and repository.
 
-### `git.pull_request.update`
+### `git.pullrequest.update`
 Updates a Pull Request status (e.g., active, abandoned, completed).
 * **Parameters**:
   * `repositoryId` (string, **required**): Name or ID of the repository.
@@ -190,7 +190,7 @@ Updates a Pull Request status (e.g., active, abandoned, completed).
   * `project` (string, optional): Project override.
 * **Output**: The updated Pull Request status.
 
-### `git.pull_request.thread.create`
+### `git.pullrequest.thread.create`
 Creates an inline code review comment thread on a file and line number in a PR.
 * **Parameters**:
   * `repositoryId` (string, **required**): Name or ID of the repository.
@@ -202,7 +202,7 @@ Creates an inline code review comment thread on a file and line number in a PR.
   * `project` (string, optional): Project override.
 * **Output**: Thread ID and comment details.
 
-### `git.pull_request.thread.list`
+### `git.pullrequest.thread.list`
 Retrieves all comment threads and replies on a PR.
 * **Parameters**:
   * `repositoryId` (string, **required**): Name or ID of the repository.

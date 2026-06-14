@@ -151,7 +151,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'work_item.get',
+    name: 'workitem.get',
     description: 'Retrieves details for a specific Azure DevOps work item by ID.',
     inputSchema: {
       type: 'object',
@@ -177,7 +177,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'work_item.create',
+    name: 'workitem.create',
     description: 'Creates a new work item (Bug, Task, User Story) in Azure DevOps.',
     inputSchema: {
       type: 'object',
@@ -204,7 +204,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'work_item.update',
+    name: 'workitem.update',
     description: 'Updates field values on an existing work item.',
     inputSchema: {
       type: 'object',
@@ -229,7 +229,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'work_item.query',
+    name: 'workitem.query',
     description: 'Searches work items using Work Item Query Language (WIQL) and returns batch details.',
     inputSchema: {
       type: 'object',
@@ -258,7 +258,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'work_item.comment.add',
+    name: 'workitem.comment.add',
     description: 'Adds a new discussion comment to a work item.',
     inputSchema: {
       type: 'object',
@@ -282,7 +282,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'work_item.link',
+    name: 'workitem.link',
     description: 'Links two work items together using a relation type (e.g., Parent/Child, Duplicate, Related).',
     inputSchema: {
       type: 'object',
@@ -393,7 +393,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'git.pull_request.create',
+    name: 'git.pullrequest.create',
     description: 'Creates a Pull Request in a Git repository.',
     inputSchema: {
       type: 'object',
@@ -417,7 +417,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'git.pull_request.get',
+    name: 'git.pullrequest.get',
     description: 'Gets details and status of a Pull Request.',
     inputSchema: {
       type: 'object',
@@ -440,7 +440,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'git.pull_request.update',
+    name: 'git.pullrequest.update',
     description: 'Updates a Pull Request status (active, abandoned, completed).',
     inputSchema: {
       type: 'object',
@@ -462,7 +462,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'git.pull_request.thread.create',
+    name: 'git.pullrequest.thread.create',
     description: 'Creates an inline code review comment thread on a file and line number in a PR.',
     inputSchema: {
       type: 'object',
@@ -486,7 +486,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'git.pull_request.thread.list',
+    name: 'git.pullrequest.thread.list',
     description: 'Retrieves all threads and comments on a PR.',
     inputSchema: {
       type: 'object',
@@ -755,32 +755,32 @@ const handleCallTool = async (request: any) => {
         };
       }
 
-      case 'work_item.get': {
+      case 'workitem.get': {
         const item = await client.getWorkItem(anyArgs.id);
         return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
       }
 
-      case 'work_item.create': {
+      case 'workitem.create': {
         const item = await client.createWorkItem(anyArgs.type, anyArgs.title, anyArgs.description, anyArgs.fields);
         return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
       }
 
-      case 'work_item.update': {
+      case 'workitem.update': {
         const item = await client.updateWorkItem(anyArgs.id, anyArgs.fields);
         return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
       }
 
-      case 'work_item.query': {
+      case 'workitem.query': {
         const items = await client.queryWorkItems(anyArgs.wiql);
         return { content: [{ type: 'text', text: JSON.stringify({ workItems: items }, null, 2) }] };
       }
 
-      case 'work_item.comment.add': {
+      case 'workitem.comment.add': {
         const comment = await client.addWorkItemComment(anyArgs.id, anyArgs.text);
         return { content: [{ type: 'text', text: JSON.stringify(comment, null, 2) }] };
       }
 
-      case 'work_item.link': {
+      case 'workitem.link': {
         const result = await client.linkWorkItems(anyArgs.sourceId, anyArgs.targetId, anyArgs.relationType);
         return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
       }
@@ -805,7 +805,7 @@ const handleCallTool = async (request: any) => {
         return { content: [{ type: 'text', text: JSON.stringify(pushResult, null, 2) }] };
       }
 
-      case 'git.pull_request.create': {
+      case 'git.pullrequest.create': {
         const pr = await client.createPullRequest(
           anyArgs.repositoryId,
           anyArgs.sourceBranch,
@@ -816,17 +816,17 @@ const handleCallTool = async (request: any) => {
         return { content: [{ type: 'text', text: JSON.stringify(pr, null, 2) }] };
       }
 
-      case 'git.pull_request.get': {
+      case 'git.pullrequest.get': {
         const pr = await client.getPullRequest(anyArgs.repositoryId, anyArgs.pullRequestId);
         return { content: [{ type: 'text', text: JSON.stringify(pr, null, 2) }] };
       }
 
-      case 'git.pull_request.update': {
+      case 'git.pullrequest.update': {
         const pr = await client.updatePullRequest(anyArgs.repositoryId, anyArgs.pullRequestId, anyArgs.status);
         return { content: [{ type: 'text', text: JSON.stringify(pr, null, 2) }] };
       }
 
-      case 'git.pull_request.thread.create': {
+      case 'git.pullrequest.thread.create': {
         const thread = await client.createPullRequestThread(
           anyArgs.repositoryId,
           anyArgs.pullRequestId,
@@ -837,7 +837,7 @@ const handleCallTool = async (request: any) => {
         return { content: [{ type: 'text', text: JSON.stringify(thread, null, 2) }] };
       }
 
-      case 'git.pull_request.thread.list': {
+      case 'git.pullrequest.thread.list': {
         const threads = await client.listPullRequestThreads(anyArgs.repositoryId, anyArgs.pullRequestId);
         return { content: [{ type: 'text', text: JSON.stringify({ threads }, null, 2) }] };
       }

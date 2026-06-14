@@ -10,6 +10,6 @@ start.bat
 work_items_report.xlsx
 generate-card.js
 server.json
-smithery-schema.json
+smithery-config-schema.json
 .gitignore
 LICENSE.txt
