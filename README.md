@@ -27,46 +27,46 @@ It provides a rich suite of tools to manage Work Items (Bugs, User Stories, Task
 - **Credential Security**: Credentials (Username and PAT) are stored locally in encrypted form (`.azure-devops-config.enc` in the working directory) using the **AES-256-GCM** encryption algorithm. The key is safely generated and stored in your user profile folder (`~/.antigravity-devops-key`).
 - **Multi-Organization and Multi-Project Support**: Seamlessly configure and interact with multiple Azure DevOps projects and organizations.
 - **Offline API Database**: Includes a local cache (`api-directory.json`) of Microsoft Azure DevOps API specs to allow fast, offline endpoint searches.
-- **Flexible REST Client**: Includes a generic tool (`api.client.call`) capable of executing any HTTP request (GET, POST, PATCH, etc.) against the Azure DevOps REST APIs.
+- **Flexible REST Client**: Includes a generic tool (`api.call`) capable of executing any HTTP request (GET, POST, PATCH, etc.) against the Azure DevOps REST APIs.
 
 ---
 
 ### Exposed Tools
 
 #### Configuration & Connection
-- `connection.settings.configure`: Save credentials (URL, Username, PAT) for a specific organization/project.
-- `connection.settings.test`: Verify connection and PAT validity for the default organization.
+- `connection.configure`: Save credentials (URL, Username, PAT) for a specific organization/project.
+- `connection.test`: Verify connection and PAT validity for the default organization.
 
 #### Generic REST Client & API Directory
-- `api.client.call`: Execute arbitrary HTTP REST requests (GET, POST, PATCH, DELETE, etc.) against Azure DevOps.
-- `api.docs.search`: Search the offline API directory for matching endpoints or schemas.
-- `api.info.get`: Retrieve details of a specific endpoint schema, including required parameters.
+- `api.call`: Execute arbitrary HTTP REST requests (GET, POST, PATCH, DELETE, etc.) against Azure DevOps.
+- `api.docs`: Search the offline API directory for matching endpoints or schemas.
+- `api.info`: Retrieve details of a specific endpoint schema, including required parameters.
 
 #### Work Item Tracking (WIT)
-- `workitem.item.get`: Retrieve details of a work item by ID.
-- `workitem.item.create`: Create a new work item (Bug, Task, User Story).
-- `workitem.item.update`: Update fields of an existing work item.
-- `workitem.query.run`: Run complex searches using the **WIQL** (Work Item Query Language) format.
-- `workitem.comment.add`: Add discussion comments to a work item.
-- `workitem.link.create`: Link two work items (e.g., Parent/Child, Related, Duplicate).
+- `workitem.get`: Retrieve details of a work item by ID.
+- `workitem.create`: Create a new work item (Bug, Task, User Story).
+- `workitem.update`: Update fields of an existing work item.
+- `workitem.query`: Run complex searches using the **WIQL** (Work Item Query Language) format.
+- `workitem.comment`: Add discussion comments to a work item.
+- `workitem.link`: Link two work items (e.g., Parent/Child, Related, Duplicate).
 
 #### Git Integration
-- `git.repo.list`: List Git repositories within the configured project.
-- `git.file.get`: Read file contents from a specific repository and branch (default: `main`).
-- `git.push.create`: Commit and push file modifications, additions, or deletions directly to a remote branch.
+- `git.repos`: List Git repositories within the configured project.
+- `git.file`: Read file contents from a specific repository and branch (default: `main`).
+- `git.push`: Commit and push file modifications, additions, or deletions directly to a remote branch.
 - `git.pr.create`: Create a new Pull Request.
 - `git.pr.get`: Retrieve Pull Request status and details.
 - `git.pr.update`: Update Pull Request status (e.g., to `completed`, `abandoned`, `active`).
-- `git.pr.comment_add`: Create review comments on specific files and lines inside a PR.
-- `git.pr.comment_list`: Retrieve all comment threads for a PR.
+- `git.pr.comment.create`: Create review comments on specific files and lines inside a PR.
+- `git.pr.comment.list`: Retrieve all comment threads for a PR.
 
 #### Pipeline Management
-- `pipeline.run.start`: Trigger a pipeline run with optional parameters.
-- `pipeline.run.get`: Retrieve status of a pipeline run.
-- `pipeline.run.logs`: Fetch combined log text for a pipeline run.
+- `pipeline.run`: Trigger a pipeline run with optional parameters.
+- `pipeline.get`: Retrieve status of a pipeline run.
+- `pipeline.logs`: Fetch combined log text for a pipeline run.
 
 #### Identity Search
-- `identity.user.search`: Search for users or groups in the organization by name or email.
+- `identity.search`: Search for users or groups in the organization by name or email.
 
 ---
 
@@ -198,46 +198,46 @@ Il server fornisce una ricca suite di strumenti per gestire Work Item (Bug, User
 - **Sicurezza delle Credenziali**: Le credenziali (Username e PAT) vengono salvate localmente in formato cifrato (`.azure-devops-config.enc` nella directory di lavoro) tramite algoritmo **AES-256-GCM**. La chiave di cifratura viene generata in modo sicuro e memorizzata nella cartella utente (`~/.antigravity-devops-key`).
 - **Supporto Multi-Organization e Multi-Project**: È possibile configurare e gestire molteplici progetti e organizzazioni DevOps.
 - **Cache API Offline**: Include un database locale (`api-directory.json`) contenente la documentazione delle API Microsoft Azure DevOps per permettere ricerche rapide offline degli endpoint.
-- **Client REST flessibile**: Oltre ai comandi specifici, espone uno strumento generico (`api.client.call`) in grado di eseguire qualsiasi richiesta HTTP (GET, POST, PATCH, ecc.) verso le API REST di Azure DevOps.
+- **Client REST flessibile**: Oltre ai comandi specifici, espone uno strumento generico (`api.call`) in grado di eseguire qualsiasi richiesta HTTP (GET, POST, PATCH, ecc.) verso le API REST di Azure DevOps.
 
 ---
 
 ### Elenco degli Strumenti (Tools) Esposti
 
 #### Configurazione e Connessione
-- `connection.settings.configure`: Configura le credenziali (URL, Username, PAT) per un'organizzazione o progetto.
-- `connection.settings.test`: Verifica la connessione e la validità del PAT per l'organizzazione configurata di default.
+- `connection.configure`: Configura le credenziali (URL, Username, PAT) per un'organizzazione o progetto.
+- `connection.test`: Verifica la connessione e la validità del PAT per l'organizzazione configurata di default.
 
 #### Client REST Generico & Elenco API (Directory)
-- `api.client.call`: Esegue qualsiasi richiesta REST HTTP (GET, POST, PATCH, DELETE, ecc.) verso Azure DevOps.
-- `api.docs.search`: Cerca all'interno dell'elenco API locale per trovare endpoint o schemi corrispondenti.
-- `api.info.get`: Recupera i dettagli sullo schema di uno specifico endpoint, inclusi i parametri richiesti.
+- `api.call`: Esegue qualsiasi richiesta REST HTTP (GET, POST, PATCH, DELETE, ecc.) verso Azure DevOps.
+- `api.docs`: Cerca all'interno dell'elenco API locale per trovare endpoint o schemi corrispondenti.
+- `api.info`: Recupera i dettagli sullo schema di uno specifico endpoint, inclusi i parametri richiesti.
 
 #### Gestione Work Items (WIT)
-- `workitem.item.get`: Recupera i dettagli di un determinato work item tramite ID.
-- `workitem.item.create`: Crea un nuovo work item (Bug, Task, User Story).
-- `workitem.item.update`: Aggiorna i campi di un work item esistente.
-- `workitem.query.run`: Esegue ricerche complesse tramite il linguaggio di query **WIQL** (Work Item Query Language).
-- `workitem.comment.add`: Aggiunge commenti all'area di discussione di un work item.
-- `workitem.link.create`: Collega due work item tra loro (es. Parent/Child, correlati, duplicati).
+- `workitem.get`: Recupera i dettagli di un determinato work item tramite ID.
+- `workitem.create`: Crea un nuovo work item (Bug, Task, User Story).
+- `workitem.update`: Aggiorna i campi di un work item esistente.
+- `workitem.query`: Esegue ricerche complesse tramite il linguaggio di query **WIQL** (Work Item Query Language).
+- `workitem.comment`: Aggiunge commenti all'area di discussione di un work item.
+- `workitem.link`: Collega due work item tra loro (es. Parent/Child, correlati, duplicati).
 
 #### Integrazione Git
-- `git.repo.list`: Elenca i repository Git presenti nel progetto configurato.
-- `git.file.get`: Legge il contenuto di un file direttamente da un repository e da un ramo specifico (default: `main`).
-- `git.push.create`: Consente di effettuare commit/push di modifiche (aggiunta, modifica, eliminazione di file) direttamente sul server remoto.
+- `git.repos`: Elenca i repository Git presenti nel progetto configurato.
+- `git.file`: Legge il contenuto di un file direttamente da un repository e da un ramo specifico (default: `main`).
+- `git.push`: Consente di effettuare commit/push di modifiche (aggiunta, modifica, eliminazione di file) direttamente sul server remoto.
 - `git.pr.create`: Crea una nuova Pull Request.
 - `git.pr.get`: Legge lo stato e i dettagli di una specifica Pull Request.
 - `git.pr.update`: Modifica lo stato di una Pull Request (es. impostandolo su `completed`, `abandoned`, `active`).
-- `git.pr.comment_add`: Crea discussioni/commenti specifici per la revisione del codice su righe precise di un file in una PR.
-- `git.pr.comment_list`: Elenca tutti i thread e commenti relativi a una PR.
+- `git.pr.comment.create`: Crea discussioni/commenti specifici per la revisione del codice su righe precise di un file in una PR.
+- `git.pr.comment.list`: Elenca tutti i thread e commenti relativi a una PR.
 
 #### Monitoraggio Pipelines
-- `pipeline.run.start`: Avvia una pipeline specificando eventuali variabili di runtime.
-- `pipeline.run.get`: Recupera lo stato di avanzamento di una specifica esecuzione.
-- `pipeline.run.logs`: Estrae i log combinati di un'esecuzione per facilitare il debugging.
+- `pipeline.run`: Avvia una pipeline specificando eventuali variabili di runtime.
+- `pipeline.get`: Recupera lo stato di avanzamento di una specifica esecuzione.
+- `pipeline.logs`: Estrae i log combinati di un'esecuzione per facilitare il debugging.
 
 #### Ricerca Utenti
-- `identity.user.search`: Cerca utenti o gruppi all'interno della directory DevOps per nome o email.
+- `identity.search`: Cerca utenti o gruppi all'interno della directory DevOps per nome o email.
 
 ---
 

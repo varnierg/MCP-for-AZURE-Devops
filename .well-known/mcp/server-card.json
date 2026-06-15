@@ -5,7 +5,7 @@
   },
   "tools": [
     {
-      "name": "connection.settings.configure",
+      "name": "connection.configure",
       "description": "Configures Azure DevOps credentials (Username & PAT) for a specific organization/project URL. Must be called first if not configured.",
       "inputSchema": {
         "type": "object",
@@ -47,7 +47,7 @@
       }
     },
     {
-      "name": "connection.settings.test",
+      "name": "connection.test",
       "description": "Verifies connection to Azure DevOps for a configured organization.",
       "inputSchema": {
         "type": "object",
@@ -81,7 +81,7 @@
       }
     },
     {
-      "name": "api.client.call",
+      "name": "api.call",
       "description": "Executes a generic Azure DevOps REST API call. Supports ALL DevOps endpoints. (Default API Version: 7.1)",
       "inputSchema": {
         "type": "object",
@@ -132,7 +132,7 @@
       }
     },
     {
-      "name": "api.docs.search",
+      "name": "api.docs",
       "description": "Searches the local database of Azure DevOps APIs and parameters to find the correct endpoints offline.",
       "inputSchema": {
         "type": "object",
@@ -172,7 +172,7 @@
       }
     },
     {
-      "name": "api.info.get",
+      "name": "api.info",
       "description": "Gets full documentation for a specific Azure DevOps API endpoint. Checks the local database first and falls back to Microsoft specs online.",
       "inputSchema": {
         "type": "object",
@@ -230,7 +230,7 @@
       }
     },
     {
-      "name": "workitem.item.get",
+      "name": "workitem.get",
       "description": "Retrieves details for a specific Azure DevOps work item by ID.",
       "inputSchema": {
         "type": "object",
@@ -276,7 +276,7 @@
       }
     },
     {
-      "name": "workitem.item.create",
+      "name": "workitem.create",
       "description": "Creates a new work item (Bug, Task, User Story) in Azure DevOps.",
       "inputSchema": {
         "type": "object",
@@ -332,7 +332,7 @@
       }
     },
     {
-      "name": "workitem.item.update",
+      "name": "workitem.update",
       "description": "Updates field values on an existing work item.",
       "inputSchema": {
         "type": "object",
@@ -380,7 +380,7 @@
       }
     },
     {
-      "name": "workitem.query.run",
+      "name": "workitem.query",
       "description": "Searches work items using Work Item Query Language (WIQL) and returns batch details.",
       "inputSchema": {
         "type": "object",
@@ -424,7 +424,7 @@
       }
     },
     {
-      "name": "workitem.comment.add",
+      "name": "workitem.comment",
       "description": "Adds a new discussion comment to a work item.",
       "inputSchema": {
         "type": "object",
@@ -469,7 +469,7 @@
       }
     },
     {
-      "name": "workitem.link.create",
+      "name": "workitem.link",
       "description": "Links two work items together using a relation type (e.g., Parent/Child, Duplicate, Related).",
       "inputSchema": {
         "type": "object",
@@ -510,7 +510,7 @@
       }
     },
     {
-      "name": "git.repo.list",
+      "name": "git.repos",
       "description": "Lists all Git repositories in the configured project.",
       "inputSchema": {
         "type": "object",
@@ -547,7 +547,7 @@
       }
     },
     {
-      "name": "git.file.get",
+      "name": "git.file",
       "description": "Reads content of a file from an Azure DevOps Git repository.",
       "inputSchema": {
         "type": "object",
@@ -597,7 +597,7 @@
       }
     },
     {
-      "name": "git.push.create",
+      "name": "git.push",
       "description": "Pushes file changes (adds, modifications, deletes) directly to a repository branch.",
       "inputSchema": {
         "type": "object",
@@ -803,7 +803,7 @@
       }
     },
     {
-      "name": "git.pr.comment_add",
+      "name": "git.pr.comment.create",
       "description": "Creates an inline code review comment thread on a file and line number in a PR.",
       "inputSchema": {
         "type": "object",
@@ -854,7 +854,7 @@
       }
     },
     {
-      "name": "git.pr.comment_list",
+      "name": "git.pr.comment.list",
       "description": "Retrieves all threads and comments on a PR.",
       "inputSchema": {
         "type": "object",
@@ -903,7 +903,7 @@
       }
     },
     {
-      "name": "pipeline.run.start",
+      "name": "pipeline.run",
       "description": "Triggers a run of a pipeline.",
       "inputSchema": {
         "type": "object",
@@ -938,7 +938,7 @@
       }
     },
     {
-      "name": "pipeline.run.get",
+      "name": "pipeline.get",
       "description": "Retrieves status of a pipeline run.",
       "inputSchema": {
         "type": "object",
@@ -976,7 +976,7 @@
       }
     },
     {
-      "name": "pipeline.run.logs",
+      "name": "pipeline.logs",
       "description": "Retrieves combined log content for a pipeline run.",
       "inputSchema": {
         "type": "object",
@@ -1022,7 +1022,7 @@
       }
     },
     {
-      "name": "identity.user.search",
+      "name": "identity.search",
       "description": "Searches for users or groups in the organization by name or email.",
       "inputSchema": {
         "type": "object",

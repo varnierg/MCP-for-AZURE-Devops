@@ -27,7 +27,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 const TOOLS = [
   {
-    name: 'connection.settings.configure',
+    name: 'connection.configure',
     description: 'Configures Azure DevOps credentials (Username & PAT) for a specific organization/project URL. Must be called first if not configured.',
     inputSchema: {
       type: 'object',
@@ -51,7 +51,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'connection.settings.test',
+    name: 'connection.test',
     description: 'Verifies connection to Azure DevOps for a configured organization.',
     inputSchema: {
       type: 'object',
@@ -73,7 +73,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'api.client.call',
+    name: 'api.call',
     description: 'Executes a generic Azure DevOps REST API call. Supports ALL DevOps endpoints. (Default API Version: 7.1)',
     inputSchema: {
       type: 'object',
@@ -96,7 +96,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'api.docs.search',
+    name: 'api.docs',
     description: 'Searches the local database of Azure DevOps APIs and parameters to find the correct endpoints offline.',
     inputSchema: {
       type: 'object',
@@ -124,7 +124,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'api.info.get',
+    name: 'api.info',
     description: 'Gets full documentation for a specific Azure DevOps API endpoint. Checks the local database first and falls back to Microsoft specs online.',
     inputSchema: {
       type: 'object',
@@ -151,7 +151,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'workitem.item.get',
+    name: 'workitem.get',
     description: 'Retrieves details for a specific Azure DevOps work item by ID.',
     inputSchema: {
       type: 'object',
@@ -177,7 +177,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'workitem.item.create',
+    name: 'workitem.create',
     description: 'Creates a new work item (Bug, Task, User Story) in Azure DevOps.',
     inputSchema: {
       type: 'object',
@@ -204,7 +204,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'workitem.item.update',
+    name: 'workitem.update',
     description: 'Updates field values on an existing work item.',
     inputSchema: {
       type: 'object',
@@ -229,7 +229,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'workitem.query.run',
+    name: 'workitem.query',
     description: 'Searches work items using Work Item Query Language (WIQL) and returns batch details.',
     inputSchema: {
       type: 'object',
@@ -258,7 +258,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'workitem.comment.add',
+    name: 'workitem.comment',
     description: 'Adds a new discussion comment to a work item.',
     inputSchema: {
       type: 'object',
@@ -282,7 +282,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'workitem.link.create',
+    name: 'workitem.link',
     description: 'Links two work items together using a relation type (e.g., Parent/Child, Duplicate, Related).',
     inputSchema: {
       type: 'object',
@@ -304,7 +304,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'git.repo.list',
+    name: 'git.repos',
     description: 'Lists all Git repositories in the configured project.',
     inputSchema: {
       type: 'object',
@@ -331,7 +331,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'git.file.get',
+    name: 'git.file',
     description: 'Reads content of a file from an Azure DevOps Git repository.',
     inputSchema: {
       type: 'object',
@@ -358,7 +358,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'git.push.create',
+    name: 'git.push',
     description: 'Pushes file changes (adds, modifications, deletes) directly to a repository branch.',
     inputSchema: {
       type: 'object',
@@ -462,7 +462,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'git.pr.comment_add',
+    name: 'git.pr.comment.create',
     description: 'Creates an inline code review comment thread on a file and line number in a PR.',
     inputSchema: {
       type: 'object',
@@ -486,7 +486,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'git.pr.comment_list',
+    name: 'git.pr.comment.list',
     description: 'Retrieves all threads and comments on a PR.',
     inputSchema: {
       type: 'object',
@@ -516,7 +516,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'pipeline.run.start',
+    name: 'pipeline.run',
     description: 'Triggers a run of a pipeline.',
     inputSchema: {
       type: 'object',
@@ -537,7 +537,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'pipeline.run.get',
+    name: 'pipeline.get',
     description: 'Retrieves status of a pipeline run.',
     inputSchema: {
       type: 'object',
@@ -560,7 +560,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'pipeline.run.logs',
+    name: 'pipeline.logs',
     description: 'Retrieves combined log content for a pipeline run.',
     inputSchema: {
       type: 'object',
@@ -586,7 +586,7 @@ const TOOLS = [
     }
   },
   {
-    name: 'identity.user.search',
+    name: 'identity.search',
     description: 'Searches for users or groups in the organization by name or email.',
     inputSchema: {
       type: 'object',
@@ -626,7 +626,7 @@ const handleCallTool = async (request: any) => {
   const anyArgs = (args || {}) as any;
 
   // 1. Handle configure_connection separately (does not require existing configuration)
-  if (name === 'connection.settings.configure') {
+  if (name === 'connection.configure') {
     try {
       const { url, username, token } = anyArgs;
       const parsed = addProjectConfig(url, username, token);
@@ -725,7 +725,7 @@ const handleCallTool = async (request: any) => {
   // 5. Route tool execution
   try {
     switch (name) {
-      case 'connection.settings.test': {
+      case 'connection.test': {
         const areas = await client.getResourceAreas();
         // Warn if server has newer API version
         const gitArea = areas.find((a: any) => a.name === 'git');
@@ -743,7 +743,7 @@ const handleCallTool = async (request: any) => {
         };
       }
 
-      case 'api.client.call': {
+      case 'api.call': {
         const res = await client.request({
           url: anyArgs.path,
           method: anyArgs.method,
@@ -755,47 +755,47 @@ const handleCallTool = async (request: any) => {
         };
       }
 
-      case 'workitem.item.get': {
+      case 'workitem.get': {
         const item = await client.getWorkItem(anyArgs.id);
         return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
       }
 
-      case 'workitem.item.create': {
+      case 'workitem.create': {
         const item = await client.createWorkItem(anyArgs.type, anyArgs.title, anyArgs.description, anyArgs.fields);
         return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
       }
 
-      case 'workitem.item.update': {
+      case 'workitem.update': {
         const item = await client.updateWorkItem(anyArgs.id, anyArgs.fields);
         return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
       }
 
-      case 'workitem.query.run': {
+      case 'workitem.query': {
         const items = await client.queryWorkItems(anyArgs.wiql);
         return { content: [{ type: 'text', text: JSON.stringify({ workItems: items }, null, 2) }] };
       }
 
-      case 'workitem.comment.add': {
+      case 'workitem.comment': {
         const comment = await client.addWorkItemComment(anyArgs.id, anyArgs.text);
         return { content: [{ type: 'text', text: JSON.stringify(comment, null, 2) }] };
       }
 
-      case 'workitem.link.create': {
+      case 'workitem.link': {
         const result = await client.linkWorkItems(anyArgs.sourceId, anyArgs.targetId, anyArgs.relationType);
         return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
       }
 
-      case 'git.repo.list': {
+      case 'git.repos': {
         const repos = await client.listRepositories();
         return { content: [{ type: 'text', text: JSON.stringify({ repositories: repos }, null, 2) }] };
       }
 
-      case 'git.file.get': {
+      case 'git.file': {
         const fileContent = await client.getGitFile(anyArgs.repositoryId, anyArgs.path, anyArgs.branch);
         return { content: [{ type: 'text', text: fileContent }] };
       }
 
-      case 'git.push.create': {
+      case 'git.push': {
         const pushResult = await client.createGitPush(
           anyArgs.repositoryId,
           anyArgs.branchName,
@@ -826,7 +826,7 @@ const handleCallTool = async (request: any) => {
         return { content: [{ type: 'text', text: JSON.stringify(pr, null, 2) }] };
       }
 
-      case 'git.pr.comment_add': {
+      case 'git.pr.comment.create': {
         const thread = await client.createPullRequestThread(
           anyArgs.repositoryId,
           anyArgs.pullRequestId,
@@ -837,27 +837,27 @@ const handleCallTool = async (request: any) => {
         return { content: [{ type: 'text', text: JSON.stringify(thread, null, 2) }] };
       }
 
-      case 'git.pr.comment_list': {
+      case 'git.pr.comment.list': {
         const threads = await client.listPullRequestThreads(anyArgs.repositoryId, anyArgs.pullRequestId);
         return { content: [{ type: 'text', text: JSON.stringify({ threads }, null, 2) }] };
       }
 
-      case 'pipeline.run.start': {
+      case 'pipeline.run': {
         const run = await client.runPipeline(anyArgs.pipelineId, anyArgs.variables);
         return { content: [{ type: 'text', text: JSON.stringify(run, null, 2) }] };
       }
 
-      case 'pipeline.run.get': {
+      case 'pipeline.get': {
         const run = await client.getPipelineRun(anyArgs.pipelineId, anyArgs.runId);
         return { content: [{ type: 'text', text: JSON.stringify(run, null, 2) }] };
       }
 
-      case 'pipeline.run.logs': {
+      case 'pipeline.logs': {
         const logs = await client.getPipelineRunLogs(anyArgs.pipelineId, anyArgs.runId);
         return { content: [{ type: 'text', text: logs }] };
       }
 
-      case 'identity.user.search': {
+      case 'identity.search': {
         const results = await client.searchIdentities(anyArgs.query);
         return { content: [{ type: 'text', text: JSON.stringify({ identities: results }, null, 2) }] };
       }
