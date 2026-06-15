@@ -650,7 +650,7 @@ const handleCallTool = async (request: any) => {
   }
 
   // 2. Handle search_api_docs separately (offline database lookup)
-  if (name === 'api.docs.search') {
+  if (name === 'api.docs') {
     try {
       const results = searchLocalDatabase(anyArgs.query, anyArgs.area);
       return {
@@ -668,7 +668,7 @@ const handleCallTool = async (request: any) => {
   }
 
   // 3. Handle get_api_info separately (local + online fallback spec lookup)
-  if (name === 'api.info.get') {
+  if (name === 'api.info') {
     try {
       const { method, path: pathStr } = anyArgs;
       // Search local first
