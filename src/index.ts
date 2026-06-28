@@ -897,7 +897,7 @@ async function main() {
     return (idx !== -1 && idx < args.length - 1) ? args[idx + 1] : undefined;
   };
   const argPort = getArgValue('--port');
-  const portStr = process.env.PORT || argPort;
+  const portStr = argPort || process.env.MCP_PORT;
 
   if (portStr) {
     const port = parseInt(portStr, 10);
