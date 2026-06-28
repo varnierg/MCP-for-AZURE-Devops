@@ -14,7 +14,8 @@ tags:
   - pipelines
 
 startCommand:
-  type: stdio
+  type: http
+  port: 8080
 configSchema:
   type: object
   properties:
@@ -38,6 +39,7 @@ commandFunction: |-
       command: 'node',
       args: [
         'dist/index.js',
+        '--port', '8080',
         '--org', c.organization || '',
         '--username', c.username || '',
         '--pat', c.pat || '',
