@@ -37896,7 +37896,7 @@ process.on("unhandledRejection", (reason, promise) => {
 });
 var TOOLS = [
   {
-    name: "configure_connection",
+    name: "connection.configure",
     description: "Configures Azure DevOps credentials (Username & PAT) for a specific organization/project URL. Must be called first if not configured.",
     inputSchema: {
       type: "object",
@@ -37906,20 +37906,43 @@ var TOOLS = [
         token: { type: "string", description: "Your Personal Access Token (PAT)" }
       },
       required: ["url", "username", "token"]
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        message: { type: "string", description: "Confirmation message of the configuration success" }
+      },
+      required: ["message"]
+    },
+    annotations: {
+      title: "Configure Connection",
+      idempotentHint: true
     }
   },
   {
-    name: "test_connection",
+    name: "connection.test",
     description: "Verifies connection to Azure DevOps for a configured organization.",
     inputSchema: {
       type: "object",
       properties: {
         organization: { type: "string", description: "Optional organization name. If omitted, uses the default organization." }
       }
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        status: { type: "string", description: "Connection status (e.g. SUCCESS)" },
+        message: { type: "string", description: "Detailed success message with authorized user and API version" }
+      },
+      required: ["status", "message"]
+    },
+    annotations: {
+      title: "Test Connection",
+      idempotentHint: true
     }
   },
   {
-    name: "call_api",
+    name: "api.call",
     description: "Executes a generic Azure DevOps REST API call. Supports ALL DevOps endpoints. (Default API Version: 7.1)",
     inputSchema: {
       type: "object",
@@ -37932,10 +37955,17 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["method", "path"]
+    },
+    outputSchema: {
+      type: "object",
+      description: "The raw JSON response from the Azure DevOps API"
+    },
+    annotations: {
+      title: "Call API"
     }
   },
   {
-    name: "search_api_docs",
+    name: "api.docs",
     description: "Searches the local database of Azure DevOps APIs and parameters to find the correct endpoints offline.",
     inputSchema: {
       type: "object",
@@ -37944,22 +37974,53 @@ var TOOLS = [
         area: { type: "string", description: 'Optional API area filter (e.g., "wit", "git", "pipelines")' }
       },
       required: ["query"]
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        endpoints: {
+          type: "array",
+          description: "List of matching API endpoints with description, parameters, and template URL",
+          items: { type: "object" }
+        }
+      },
+      required: ["endpoints"]
+    },
+    annotations: {
+      title: "Search API Documentation",
+      readOnlyHint: true,
+      idempotentHint: true
     }
   },
   {
-    name: "get_api_info",
+    name: "api.info",
     description: "Gets full documentation for a specific Azure DevOps API endpoint. Checks the local database first and falls back to Microsoft specs online.",
     inputSchema: {
       type: "object",
       properties: {
-        method: { type: "string", enum: ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+        method: { type: "string", enum: ["GET", "POST", "PUT", "PATCH", "DELETE"], description: "HTTP method of the API endpoint" },
         path: { type: "string", description: 'Full API path (e.g., "/_apis/git/repositories")' }
       },
       required: ["method", "path"]
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        method: { type: "string", description: "HTTP method" },
+        path: { type: "string", description: "API path template" },
+        description: { type: "string", description: "Description of the endpoint" },
+        parameters: { type: "array", description: "List of path, query, and body parameters" }
+      },
+      required: ["method", "path"]
+    },
+    annotations: {
+      title: "Get API Info",
+      readOnlyHint: true,
+      idempotentHint: true
     }
   },
   {
-    name: "get_work_item",
+    name: "workitem.get",
     description: "Retrieves details for a specific Azure DevOps work item by ID.",
     inputSchema: {
       type: "object",
@@ -37969,10 +38030,23 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["id"]
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "number", description: "The work item ID" },
+        fields: { type: "object", description: "Key-value pairs of all work item fields" }
+      },
+      required: ["id", "fields"]
+    },
+    annotations: {
+      title: "Get Work Item",
+      readOnlyHint: true,
+      idempotentHint: true
     }
   },
   {
-    name: "create_work_item",
+    name: "workitem.create",
     description: "Creates a new work item (Bug, Task, User Story) in Azure DevOps.",
     inputSchema: {
       type: "object",
@@ -37985,10 +38059,21 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["type", "title"]
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "number", description: "The newly created work item ID" },
+        fields: { type: "object", description: "Key-value pairs of the work item fields" }
+      },
+      required: ["id"]
+    },
+    annotations: {
+      title: "Create Work Item"
     }
   },
   {
-    name: "update_work_item",
+    name: "workitem.update",
     description: "Updates field values on an existing work item.",
     inputSchema: {
       type: "object",
@@ -37999,10 +38084,21 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["id", "fields"]
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "number", description: "The updated work item ID" },
+        fields: { type: "object", description: "Key-value pairs of the updated fields" }
+      },
+      required: ["id"]
+    },
+    annotations: {
+      title: "Update Work Item"
     }
   },
   {
-    name: "query_work_items",
+    name: "workitem.query",
     description: "Searches work items using Work Item Query Language (WIQL) and returns batch details.",
     inputSchema: {
       type: "object",
@@ -38012,10 +38108,26 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["wiql"]
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        workItems: {
+          type: "array",
+          description: "List of matching work items with their fields and IDs",
+          items: { type: "object" }
+        }
+      },
+      required: ["workItems"]
+    },
+    annotations: {
+      title: "Query Work Items",
+      readOnlyHint: true,
+      idempotentHint: true
     }
   },
   {
-    name: "add_work_item_comment",
+    name: "workitem.comment",
     description: "Adds a new discussion comment to a work item.",
     inputSchema: {
       type: "object",
@@ -38026,10 +38138,20 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["id", "text"]
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "number", description: "The comment ID" },
+        text: { type: "string", description: "The comment content" }
+      }
+    },
+    annotations: {
+      title: "Add Work Item Comment"
     }
   },
   {
-    name: "link_work_item",
+    name: "workitem.link",
     description: "Links two work items together using a relation type (e.g., Parent/Child, Duplicate, Related).",
     inputSchema: {
       type: "object",
@@ -38041,10 +38163,17 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["sourceId", "targetId", "relationType"]
+    },
+    outputSchema: {
+      type: "object",
+      description: "JSON response containing the updated work item relations"
+    },
+    annotations: {
+      title: "Link Work Items"
     }
   },
   {
-    name: "list_repositories",
+    name: "git.repos",
     description: "Lists all Git repositories in the configured project.",
     inputSchema: {
       type: "object",
@@ -38052,10 +38181,26 @@ var TOOLS = [
         organization: { type: "string", description: "Optional organization override" },
         project: { type: "string", description: "Optional project override" }
       }
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        repositories: {
+          type: "array",
+          description: "List of repositories in the project",
+          items: { type: "object" }
+        }
+      },
+      required: ["repositories"]
+    },
+    annotations: {
+      title: "List Repositories",
+      readOnlyHint: true,
+      idempotentHint: true
     }
   },
   {
-    name: "get_git_file",
+    name: "git.file",
     description: "Reads content of a file from an Azure DevOps Git repository.",
     inputSchema: {
       type: "object",
@@ -38067,10 +38212,22 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["repositoryId", "path"]
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        content: { type: "string", description: "The raw file content text" }
+      },
+      required: ["content"]
+    },
+    annotations: {
+      title: "Get Git File",
+      readOnlyHint: true,
+      idempotentHint: true
     }
   },
   {
-    name: "create_git_push",
+    name: "git.push",
     description: "Pushes file changes (adds, modifications, deletes) directly to a repository branch.",
     inputSchema: {
       type: "object",
@@ -38080,10 +38237,11 @@ var TOOLS = [
         commitMessage: { type: "string", description: "Commit message" },
         changes: {
           type: "array",
+          description: "Array of file changes to apply in this commit",
           items: {
             type: "object",
             properties: {
-              changeType: { type: "string", enum: ["add", "edit", "delete"] },
+              changeType: { type: "string", enum: ["add", "edit", "delete"], description: "Type of change: add, edit, or delete" },
               path: { type: "string", description: 'File path in repo (e.g. "/newfile.txt")' },
               content: { type: "string", description: "File content (required for add/edit)" }
             },
@@ -38094,10 +38252,17 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["repositoryId", "branchName", "commitMessage", "changes"]
+    },
+    outputSchema: {
+      type: "object",
+      description: "JSON response from the git push operation"
+    },
+    annotations: {
+      title: "Create Git Push"
     }
   },
   {
-    name: "create_pull_request",
+    name: "git.pr.create",
     description: "Creates a Pull Request in a Git repository.",
     inputSchema: {
       type: "object",
@@ -38111,10 +38276,17 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["repositoryId", "sourceBranch", "targetBranch", "title"]
+    },
+    outputSchema: {
+      type: "object",
+      description: "JSON response of the newly created pull request"
+    },
+    annotations: {
+      title: "Create Pull Request"
     }
   },
   {
-    name: "get_pull_request",
+    name: "git.pr.get",
     description: "Gets details and status of a Pull Request.",
     inputSchema: {
       type: "object",
@@ -38125,10 +38297,19 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["repositoryId", "pullRequestId"]
+    },
+    outputSchema: {
+      type: "object",
+      description: "JSON response of the pull request details"
+    },
+    annotations: {
+      title: "Get Pull Request",
+      readOnlyHint: true,
+      idempotentHint: true
     }
   },
   {
-    name: "update_pull_request",
+    name: "git.pr.update",
     description: "Updates a Pull Request status (active, abandoned, completed).",
     inputSchema: {
       type: "object",
@@ -38140,10 +38321,17 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["repositoryId", "pullRequestId", "status"]
+    },
+    outputSchema: {
+      type: "object",
+      description: "JSON response of the updated pull request"
+    },
+    annotations: {
+      title: "Update Pull Request"
     }
   },
   {
-    name: "create_pull_request_thread",
+    name: "git.pr.comment.create",
     description: "Creates an inline code review comment thread on a file and line number in a PR.",
     inputSchema: {
       type: "object",
@@ -38157,10 +38345,17 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["repositoryId", "pullRequestId", "filePath", "line", "content"]
+    },
+    outputSchema: {
+      type: "object",
+      description: "JSON response of the newly created thread and comments"
+    },
+    annotations: {
+      title: "Create Pull Request Thread"
     }
   },
   {
-    name: "list_pull_request_threads",
+    name: "git.pr.comment.list",
     description: "Retrieves all threads and comments on a PR.",
     inputSchema: {
       type: "object",
@@ -38171,10 +38366,26 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["repositoryId", "pullRequestId"]
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        threads: {
+          type: "array",
+          description: "List of PR comment threads",
+          items: { type: "object" }
+        }
+      },
+      required: ["threads"]
+    },
+    annotations: {
+      title: "List Pull Request Threads",
+      readOnlyHint: true,
+      idempotentHint: true
     }
   },
   {
-    name: "run_pipeline",
+    name: "pipeline.run",
     description: "Triggers a run of a pipeline.",
     inputSchema: {
       type: "object",
@@ -38185,10 +38396,17 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["pipelineId"]
+    },
+    outputSchema: {
+      type: "object",
+      description: "JSON response of the newly started run"
+    },
+    annotations: {
+      title: "Run Pipeline"
     }
   },
   {
-    name: "get_pipeline_run",
+    name: "pipeline.get",
     description: "Retrieves status of a pipeline run.",
     inputSchema: {
       type: "object",
@@ -38199,10 +38417,19 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["pipelineId", "runId"]
+    },
+    outputSchema: {
+      type: "object",
+      description: "JSON response of the run status details"
+    },
+    annotations: {
+      title: "Get Pipeline Run",
+      readOnlyHint: true,
+      idempotentHint: true
     }
   },
   {
-    name: "get_pipeline_run_logs",
+    name: "pipeline.logs",
     description: "Retrieves combined log content for a pipeline run.",
     inputSchema: {
       type: "object",
@@ -38213,10 +38440,22 @@ var TOOLS = [
         project: { type: "string", description: "Optional project override" }
       },
       required: ["pipelineId", "runId"]
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        logs: { type: "string", description: "The pipeline run log contents" }
+      },
+      required: ["logs"]
+    },
+    annotations: {
+      title: "Get Pipeline Run Logs",
+      readOnlyHint: true,
+      idempotentHint: true
     }
   },
   {
-    name: "search_identities",
+    name: "identity.search",
     description: "Searches for users or groups in the organization by name or email.",
     inputSchema: {
       type: "object",
@@ -38225,6 +38464,22 @@ var TOOLS = [
         organization: { type: "string", description: "Optional organization override" }
       },
       required: ["query"]
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        identities: {
+          type: "array",
+          description: "List of matching identities",
+          items: { type: "object" }
+        }
+      },
+      required: ["identities"]
+    },
+    annotations: {
+      title: "Search Identities",
+      readOnlyHint: true,
+      idempotentHint: true
     }
   }
 ];
@@ -38236,7 +38491,7 @@ var handleListTools = async () => {
 var handleCallTool = async (request) => {
   const { name, arguments: args } = request.params;
   const anyArgs = args || {};
-  if (name === "configure_connection") {
+  if (name === "connection.configure") {
     try {
       const { url: url3, username, token } = anyArgs;
       const parsed = addProjectConfig(url3, username, token);
@@ -38255,13 +38510,13 @@ var handleCallTool = async (request) => {
       };
     }
   }
-  if (name === "search_api_docs") {
+  if (name === "api.docs") {
     try {
       const results = searchLocalDatabase(anyArgs.query, anyArgs.area);
       return {
         content: [{
           type: "text",
-          text: JSON.stringify(results, null, 2)
+          text: JSON.stringify({ endpoints: results }, null, 2)
         }]
       };
     } catch (e) {
@@ -38271,7 +38526,7 @@ var handleCallTool = async (request) => {
       };
     }
   }
-  if (name === "get_api_info") {
+  if (name === "api.info") {
     try {
       const { method, path: pathStr } = anyArgs;
       const localResults = searchLocalDatabase(pathStr);
@@ -38315,7 +38570,7 @@ var handleCallTool = async (request) => {
   const client = new DevOpsClient(creds.organization, creds.project, creds.username, creds.pat);
   try {
     switch (name) {
-      case "test_connection": {
+      case "connection.test": {
         const areas = await client.getResourceAreas();
         const gitArea = areas.find((a) => a.name === "git");
         const remoteVersion = gitArea ? gitArea.releasedVersion || gitArea.maxVersion || "7.1" : "7.1";
@@ -38332,7 +38587,7 @@ Organization: ${creds.organization}
           }]
         };
       }
-      case "call_api": {
+      case "api.call": {
         const res = await client.request({
           url: anyArgs.path,
           method: anyArgs.method,
@@ -38343,39 +38598,39 @@ Organization: ${creds.organization}
           content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }]
         };
       }
-      case "get_work_item": {
+      case "workitem.get": {
         const item = await client.getWorkItem(anyArgs.id);
         return { content: [{ type: "text", text: JSON.stringify(item, null, 2) }] };
       }
-      case "create_work_item": {
+      case "workitem.create": {
         const item = await client.createWorkItem(anyArgs.type, anyArgs.title, anyArgs.description, anyArgs.fields);
         return { content: [{ type: "text", text: JSON.stringify(item, null, 2) }] };
       }
-      case "update_work_item": {
+      case "workitem.update": {
         const item = await client.updateWorkItem(anyArgs.id, anyArgs.fields);
         return { content: [{ type: "text", text: JSON.stringify(item, null, 2) }] };
       }
-      case "query_work_items": {
+      case "workitem.query": {
         const items = await client.queryWorkItems(anyArgs.wiql);
-        return { content: [{ type: "text", text: JSON.stringify(items, null, 2) }] };
+        return { content: [{ type: "text", text: JSON.stringify({ workItems: items }, null, 2) }] };
       }
-      case "add_work_item_comment": {
+      case "workitem.comment": {
         const comment = await client.addWorkItemComment(anyArgs.id, anyArgs.text);
         return { content: [{ type: "text", text: JSON.stringify(comment, null, 2) }] };
       }
-      case "link_work_item": {
+      case "workitem.link": {
         const result = await client.linkWorkItems(anyArgs.sourceId, anyArgs.targetId, anyArgs.relationType);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       }
-      case "list_repositories": {
+      case "git.repos": {
         const repos = await client.listRepositories();
-        return { content: [{ type: "text", text: JSON.stringify(repos, null, 2) }] };
+        return { content: [{ type: "text", text: JSON.stringify({ repositories: repos }, null, 2) }] };
       }
-      case "get_git_file": {
+      case "git.file": {
         const fileContent = await client.getGitFile(anyArgs.repositoryId, anyArgs.path, anyArgs.branch);
         return { content: [{ type: "text", text: fileContent }] };
       }
-      case "create_git_push": {
+      case "git.push": {
         const pushResult = await client.createGitPush(
           anyArgs.repositoryId,
           anyArgs.branchName,
@@ -38384,7 +38639,7 @@ Organization: ${creds.organization}
         );
         return { content: [{ type: "text", text: JSON.stringify(pushResult, null, 2) }] };
       }
-      case "create_pull_request": {
+      case "git.pr.create": {
         const pr = await client.createPullRequest(
           anyArgs.repositoryId,
           anyArgs.sourceBranch,
@@ -38394,15 +38649,15 @@ Organization: ${creds.organization}
         );
         return { content: [{ type: "text", text: JSON.stringify(pr, null, 2) }] };
       }
-      case "get_pull_request": {
+      case "git.pr.get": {
         const pr = await client.getPullRequest(anyArgs.repositoryId, anyArgs.pullRequestId);
         return { content: [{ type: "text", text: JSON.stringify(pr, null, 2) }] };
       }
-      case "update_pull_request": {
+      case "git.pr.update": {
         const pr = await client.updatePullRequest(anyArgs.repositoryId, anyArgs.pullRequestId, anyArgs.status);
         return { content: [{ type: "text", text: JSON.stringify(pr, null, 2) }] };
       }
-      case "create_pull_request_thread": {
+      case "git.pr.comment.create": {
         const thread = await client.createPullRequestThread(
           anyArgs.repositoryId,
           anyArgs.pullRequestId,
@@ -38412,25 +38667,25 @@ Organization: ${creds.organization}
         );
         return { content: [{ type: "text", text: JSON.stringify(thread, null, 2) }] };
       }
-      case "list_pull_request_threads": {
+      case "git.pr.comment.list": {
         const threads = await client.listPullRequestThreads(anyArgs.repositoryId, anyArgs.pullRequestId);
-        return { content: [{ type: "text", text: JSON.stringify(threads, null, 2) }] };
+        return { content: [{ type: "text", text: JSON.stringify({ threads }, null, 2) }] };
       }
-      case "run_pipeline": {
+      case "pipeline.run": {
         const run = await client.runPipeline(anyArgs.pipelineId, anyArgs.variables);
         return { content: [{ type: "text", text: JSON.stringify(run, null, 2) }] };
       }
-      case "get_pipeline_run": {
+      case "pipeline.get": {
         const run = await client.getPipelineRun(anyArgs.pipelineId, anyArgs.runId);
         return { content: [{ type: "text", text: JSON.stringify(run, null, 2) }] };
       }
-      case "get_pipeline_run_logs": {
+      case "pipeline.logs": {
         const logs = await client.getPipelineRunLogs(anyArgs.pipelineId, anyArgs.runId);
         return { content: [{ type: "text", text: logs }] };
       }
-      case "search_identities": {
+      case "identity.search": {
         const results = await client.searchIdentities(anyArgs.query);
-        return { content: [{ type: "text", text: JSON.stringify(results, null, 2) }] };
+        return { content: [{ type: "text", text: JSON.stringify({ identities: results }, null, 2) }] };
       }
       default:
         throw new Error(`Tool not found: ${name}`);
@@ -38472,6 +38727,15 @@ async function main() {
     const httpServer = http3.createServer(async (req, res) => {
       const parsedUrl = url2.parse(req.url || "", true);
       const pathname = parsedUrl.pathname;
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Mcp-Session-Id");
+      res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
+      if (req.method === "OPTIONS") {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
       if (req.method === "GET" && (pathname === "/sse" || pathname === "/" && req.headers.accept === "text/event-stream")) {
         const transport = new SSEServerTransport("/messages", res);
         const serverInstance = createServer2();

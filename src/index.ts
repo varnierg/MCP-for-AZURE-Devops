@@ -907,6 +907,18 @@ async function main() {
       const parsedUrl = url.parse(req.url || '', true);
       const pathname = parsedUrl.pathname;
 
+      // Enable CORS for browser-based clients (e.g. Smithery Sandbox/Toolbox)
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Mcp-Session-Id');
+      res.setHeader('Access-Control-Expose-Headers', 'Mcp-Session-Id');
+
+      if (req.method === 'OPTIONS') {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+
       // Establish SSE connection
       if (req.method === 'GET' && (pathname === '/sse' || (pathname === '/' && req.headers.accept === 'text/event-stream'))) {
         const transport = new SSEServerTransport('/messages', res);

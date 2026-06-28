@@ -70,23 +70,11 @@ serverProcess.stdout.on('data', (data) => {
 
           console.log('Successfully generated /.well-known/mcp/server-card.json and /.well-known/mcp.json');
 
-          // Update manifest.json with the tools list
-          const manifestPath = path.join(__dirname, 'manifest.json');
-          if (fs.existsSync(manifestPath)) {
-            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-            manifest.tools = json.result.tools;
-            
-            // Ensure defaultProject in user_config has default: ""
-            if (manifest.user_config && manifest.user_config.defaultProject) {
-              manifest.user_config.defaultProject.default = "";
-            }
-
-            fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
-            console.log('Successfully updated manifest.json with tools list and optional default config.');
-          }
-          serverProcess.kill();
-          process.exit(0);
-        }
+          // The workspace manifest.json must remain clean (without tools key) to pass the @anthropic-ai/mcpb pack validator.
+          // Tools will be injected into manifest.json inside the bundle post-packing by post-pack.js.
+           serverProcess.kill();
+           process.exit(0);
+         }
       }
     }
   } catch (err) {
