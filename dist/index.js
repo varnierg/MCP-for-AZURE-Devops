@@ -38714,11 +38714,9 @@ function createServer2() {
   return server;
 }
 var PrefixSafeSSEServerTransport = class extends SSEServerTransport {
-  _prefix;
   _res;
-  constructor(endpoint, res, prefix) {
+  constructor(endpoint, res) {
     super(endpoint, res);
-    this._prefix = prefix;
     this._res = res;
   }
   async start() {
@@ -38731,7 +38729,7 @@ var PrefixSafeSSEServerTransport = class extends SSEServerTransport {
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive"
     });
-    const relativeUrlWithSession = `${this._prefix}/messages?sessionId=${this.sessionId}`;
+    const relativeUrlWithSession = `messages?sessionId=${this.sessionId}`;
     this._res.write(`event: endpoint
 data: ${relativeUrlWithSession}
 
@@ -38751,7 +38749,11 @@ async function main() {
   };
   const argPort = getArgValue("--port");
   const isCloudContainer = process.platform === "linux" || fs4.existsSync("/.dockerenv");
-  const portStr = argPort || (isCloudContainer ? process.env.PORT : void 0) || process.env.MCP_PORT;
+  const portStr = argPort || (isCloudContainer ? process.env.PORT || "8080" : void 0) || process.env.MCP_PORT;
+  const stdioServerInstance = createServer2();
+  const stdioTransport = new StdioServerTransport();
+  await stdioServerInstance.connect(stdioTransport);
+  console.error("[Azure DevOps MCP Server] Server running on stdio transport.");
   if (portStr) {
     const port = parseInt(portStr, 10);
     const transports = /* @__PURE__ */ new Map();
@@ -38767,14 +38769,21 @@ async function main() {
         res.end();
         return;
       }
-      if (req.method === "GET" && (pathname.endsWith("/sse") || (pathname === "/" || pathname === "") && req.headers.accept === "text/event-stream")) {
-        let prefix = "";
-        if (pathname.endsWith("/sse")) {
-          prefix = pathname.slice(0, -4);
-        } else if (pathname.endsWith("/")) {
-          prefix = pathname.slice(0, -1);
-        }
-        const transport = new PrefixSafeSSEServerTransport("messages", res, prefix);
+      if (req.method === "GET" && (pathname.endsWith("/.well-known/mcp/server-card.json") || pathname.endsWith("/.well-known/mcp.json"))) {
+        const filePath = path4.join(__dirname, "..", ".well-known", "mcp", "server-card.json");
+        fs4.readFile(filePath, "utf8", (err, data) => {
+          if (err) {
+            res.writeHead(500, { "Content-Type": "text/plain" });
+            res.end(`Internal Server Error: ${err.message}`);
+            return;
+          }
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(data);
+        });
+        return;
+      }
+      if (req.method === "GET" && (pathname.endsWith("/sse") || req.headers.accept === "text/event-stream")) {
+        const transport = new PrefixSafeSSEServerTransport("messages", res);
         const serverInstance = createServer2();
         transports.set(transport.sessionId, { transport, server: serverInstance });
         res.on("close", () => {
@@ -38811,20 +38820,7 @@ async function main() {
         });
         return;
       }
-      if (req.method === "GET" && (pathname.endsWith("/.well-known/mcp/server-card.json") || pathname.endsWith("/.well-known/mcp.json"))) {
-        const filePath = path4.join(__dirname, "..", ".well-known", "mcp", "server-card.json");
-        fs4.readFile(filePath, "utf8", (err, data) => {
-          if (err) {
-            res.writeHead(500, { "Content-Type": "text/plain" });
-            res.end(`Internal Server Error: ${err.message}`);
-            return;
-          }
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(data);
-        });
-        return;
-      }
-      if (req.method === "GET" && (pathname === "/" || pathname.endsWith("/health"))) {
+      if (req.method === "GET") {
         res.writeHead(200, { "Content-Type": "text/plain" });
         res.end("OK");
         return;
@@ -38835,11 +38831,6 @@ async function main() {
     httpServer.listen(port, "0.0.0.0", () => {
       console.error(`[Azure DevOps MCP Server] Server running on SSE transport listening on port ${port}.`);
     });
-  } else {
-    const serverInstance = createServer2();
-    const transport = new StdioServerTransport();
-    await serverInstance.connect(transport);
-    console.error("[Azure DevOps MCP Server] Server running on stdio transport.");
   }
 }
 main().catch((err) => {

@@ -891,12 +891,10 @@ function createServer(): Server {
 }
 
 class PrefixSafeSSEServerTransport extends SSEServerTransport {
-  private _prefix: string;
   private _res: http.ServerResponse;
 
-  constructor(endpoint: string, res: http.ServerResponse, prefix: string) {
+  constructor(endpoint: string, res: http.ServerResponse) {
     super(endpoint, res);
-    this._prefix = prefix;
     this._res = res;
   }
 
@@ -911,7 +909,9 @@ class PrefixSafeSSEServerTransport extends SSEServerTransport {
       Connection: 'keep-alive'
     });
 
-    const relativeUrlWithSession = `${this._prefix}/messages?sessionId=${this.sessionId}`;
+    // Return a relative path without leading slash so that the client naturally resolves it 
+    // against the full base gateway URL (preserving reverse proxy subpaths/prefixes).
+    const relativeUrlWithSession = `messages?sessionId=${this.sessionId}`;
     this._res.write(`event: endpoint\ndata: ${relativeUrlWithSession}\n\n`);
     self._sseResponse = this._res;
     this._res.on('close', () => {
@@ -932,7 +932,15 @@ async function main() {
   // Only utilize process.env.PORT in cloud containers (Linux or Docker)
   // to prevent port collisions in local Windows developer desktop environments.
   const isCloudContainer = process.platform === 'linux' || fs.existsSync('/.dockerenv');
-  const portStr = argPort || (isCloudContainer ? process.env.PORT : undefined) || process.env.MCP_PORT;
+  const portStr = argPort || (isCloudContainer ? (process.env.PORT || '8080') : undefined) || process.env.MCP_PORT;
+
+  // Always start the default stdio server transport.
+  // This ensures that even if we listen on HTTP/SSE (e.g. in cloud container),
+  // stdio connections from Smithery or local runners will still initialize immediately and not hang.
+  const stdioServerInstance = createServer();
+  const stdioTransport = new StdioServerTransport();
+  await stdioServerInstance.connect(stdioTransport);
+  console.error('[Azure DevOps MCP Server] Server running on stdio transport.');
 
   if (portStr) {
     const port = parseInt(portStr, 10);
@@ -954,17 +962,25 @@ async function main() {
         return;
       }
 
-      // Establish SSE connection (supporting subpath prefix suffix-matching)
-      if (req.method === 'GET' && (pathname.endsWith('/sse') || ((pathname === '/' || pathname === '') && req.headers.accept === 'text/event-stream'))) {
-        let prefix = '';
-        if (pathname.endsWith('/sse')) {
-          prefix = pathname.slice(0, -4);
-        } else if (pathname.endsWith('/')) {
-          prefix = pathname.slice(0, -1);
-        }
+      // Serve well-known server card to skip dynamic scanning (supporting subpath prefix suffix-matching)
+      if (req.method === 'GET' && (pathname.endsWith('/.well-known/mcp/server-card.json') || pathname.endsWith('/.well-known/mcp.json'))) {
+        const filePath = path.join(__dirname, '..', '.well-known', 'mcp', 'server-card.json');
+        fs.readFile(filePath, 'utf8', (err, data) => {
+          if (err) {
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end(`Internal Server Error: ${err.message}`);
+            return;
+          }
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(data);
+        });
+        return;
+      }
 
+      // Establish SSE connection (supporting subpath prefix suffix-matching and Accept header fallback)
+      if (req.method === 'GET' && (pathname.endsWith('/sse') || req.headers.accept === 'text/event-stream')) {
         // Use our prefix-safe SSE transport wrapper
-        const transport = new PrefixSafeSSEServerTransport('messages', res, prefix);
+        const transport = new PrefixSafeSSEServerTransport('messages', res);
         const serverInstance = createServer();
         transports.set(transport.sessionId, { transport, server: serverInstance });
         
@@ -1008,23 +1024,8 @@ async function main() {
         return;
       }
 
-      // Serve well-known server card to skip dynamic scanning (supporting subpath prefix suffix-matching)
-      if (req.method === 'GET' && (pathname.endsWith('/.well-known/mcp/server-card.json') || pathname.endsWith('/.well-known/mcp.json'))) {
-        const filePath = path.join(__dirname, '..', '.well-known', 'mcp', 'server-card.json');
-        fs.readFile(filePath, 'utf8', (err, data) => {
-          if (err) {
-            res.writeHead(500, { 'Content-Type': 'text/plain' });
-            res.end(`Internal Server Error: ${err.message}`);
-            return;
-          }
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(data);
-        });
-        return;
-      }
-
-      // Simple health check (supporting subpath prefix suffix-matching)
-      if (req.method === 'GET' && (pathname === '/' || pathname.endsWith('/health'))) {
+      // Simple health check / fallback for any other GET requests (supporting prefix-agnostic base path requests)
+      if (req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('OK');
         return;
@@ -1037,11 +1038,6 @@ async function main() {
     httpServer.listen(port, '0.0.0.0', () => {
       console.error(`[Azure DevOps MCP Server] Server running on SSE transport listening on port ${port}.`);
     });
-  } else {
-    const serverInstance = createServer();
-    const transport = new StdioServerTransport();
-    await serverInstance.connect(transport);
-    console.error('[Azure DevOps MCP Server] Server running on stdio transport.');
   }
 }
 
