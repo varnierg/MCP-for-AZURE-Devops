@@ -38769,7 +38769,7 @@ async function main() {
   };
   const argPort = getArgValue("--port");
   const isCloudContainer = process.platform === "linux" || fs4.existsSync("/.dockerenv");
-  const portStr = argPort || (isCloudContainer ? process.env.PORT || "8080" : void 0) || process.env.MCP_PORT;
+  const portStr = argPort || process.env.PORT || process.env.MCP_PORT || (isCloudContainer ? "8080" : void 0);
   const stdioServerInstance = createServer2();
   const stdioTransport = new StdioServerTransport();
   await stdioServerInstance.connect(stdioTransport);

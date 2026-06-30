@@ -953,10 +953,11 @@ async function main() {
   };
   const argPort = getArgValue('--port');
   
-  // Only utilize process.env.PORT in cloud containers (Linux or Docker)
-  // to prevent port collisions in local Windows developer desktop environments.
+  // Always respect --port argument first.
+  // Next, respect process.env.PORT or process.env.MCP_PORT if they are set (even on Windows).
+  // Finally, fallback to port 8080 ONLY when running in a cloud container.
   const isCloudContainer = process.platform === 'linux' || fs.existsSync('/.dockerenv');
-  const portStr = argPort || (isCloudContainer ? (process.env.PORT || '8080') : undefined) || process.env.MCP_PORT;
+  const portStr = argPort || process.env.PORT || process.env.MCP_PORT || (isCloudContainer ? '8080' : undefined);
 
   // Always start the default stdio server transport.
   // This ensures that even if we listen on HTTP/SSE (e.g. in cloud container),
