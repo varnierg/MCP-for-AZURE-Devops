@@ -38715,9 +38715,11 @@ function createServer2() {
 }
 var PrefixSafeSSEServerTransport = class extends SSEServerTransport {
   _res;
-  constructor(endpoint, res) {
+  _req;
+  constructor(endpoint, res, req) {
     super(endpoint, res);
     this._res = res;
+    this._req = req;
   }
   async start() {
     const self2 = this;
@@ -38729,7 +38731,25 @@ var PrefixSafeSSEServerTransport = class extends SSEServerTransport {
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive"
     });
-    const relativeUrlWithSession = `messages?sessionId=${this.sessionId}`;
+    let prefix = "";
+    const forwardedPrefix = this._req.headers["x-forwarded-prefix"];
+    const forwardedUri = this._req.headers["x-forwarded-uri"];
+    if (typeof forwardedPrefix === "string") {
+      prefix = forwardedPrefix;
+    } else if (typeof forwardedUri === "string" && forwardedUri.includes("/messages")) {
+      prefix = forwardedUri.split("/messages")[0];
+    } else if (typeof forwardedUri === "string" && forwardedUri.includes("/sse")) {
+      prefix = forwardedUri.split("/sse")[0];
+    } else if (this._req.headers.host === "server.smithery.ai" || this._req.headers.host === "mcp-azure-devops.run.tools") {
+      prefix = "/github-y8ge/mcp-azure-devops";
+    }
+    if (prefix && !prefix.startsWith("/")) {
+      prefix = "/" + prefix;
+    }
+    if (prefix.endsWith("/")) {
+      prefix = prefix.slice(0, -1);
+    }
+    const relativeUrlWithSession = `${prefix}/messages?sessionId=${this.sessionId}`;
     this._res.write(`event: endpoint
 data: ${relativeUrlWithSession}
 
@@ -38783,7 +38803,7 @@ async function main() {
         return;
       }
       if (req.method === "GET" && (pathname.endsWith("/sse") || req.headers.accept === "text/event-stream")) {
-        const transport = new PrefixSafeSSEServerTransport("messages", res);
+        const transport = new PrefixSafeSSEServerTransport("messages", res, req);
         const serverInstance = createServer2();
         transports.set(transport.sessionId, { transport, server: serverInstance });
         res.on("close", () => {

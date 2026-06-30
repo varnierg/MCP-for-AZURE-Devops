@@ -892,10 +892,12 @@ function createServer(): Server {
 
 class PrefixSafeSSEServerTransport extends SSEServerTransport {
   private _res: http.ServerResponse;
+  private _req: http.IncomingMessage;
 
-  constructor(endpoint: string, res: http.ServerResponse) {
+  constructor(endpoint: string, res: http.ServerResponse, req: http.IncomingMessage) {
     super(endpoint, res);
     this._res = res;
+    this._req = req;
   }
 
   override async start(): Promise<void> {
@@ -909,9 +911,31 @@ class PrefixSafeSSEServerTransport extends SSEServerTransport {
       Connection: 'keep-alive'
     });
 
-    // Return a relative path without leading slash so that the client naturally resolves it 
-    // against the full base gateway URL (preserving reverse proxy subpaths/prefixes).
-    const relativeUrlWithSession = `messages?sessionId=${this.sessionId}`;
+    // Determine prefix dynamically from headers
+    let prefix = '';
+    const forwardedPrefix = this._req.headers['x-forwarded-prefix'];
+    const forwardedUri = this._req.headers['x-forwarded-uri'];
+    
+    if (typeof forwardedPrefix === 'string') {
+      prefix = forwardedPrefix;
+    } else if (typeof forwardedUri === 'string' && forwardedUri.includes('/messages')) {
+      prefix = forwardedUri.split('/messages')[0];
+    } else if (typeof forwardedUri === 'string' && forwardedUri.includes('/sse')) {
+      prefix = forwardedUri.split('/sse')[0];
+    } else if (this._req.headers.host === 'server.smithery.ai' || this._req.headers.host === 'mcp-azure-devops.run.tools') {
+      prefix = '/github-y8ge/mcp-azure-devops';
+    }
+
+    // Ensure prefix starts with slash if not empty
+    if (prefix && !prefix.startsWith('/')) {
+      prefix = '/' + prefix;
+    }
+    // Ensure prefix doesn't end with slash
+    if (prefix.endsWith('/')) {
+      prefix = prefix.slice(0, -1);
+    }
+
+    const relativeUrlWithSession = `${prefix}/messages?sessionId=${this.sessionId}`;
     this._res.write(`event: endpoint\ndata: ${relativeUrlWithSession}\n\n`);
     self._sseResponse = this._res;
     this._res.on('close', () => {
@@ -980,7 +1004,7 @@ async function main() {
       // Establish SSE connection (supporting subpath prefix suffix-matching and Accept header fallback)
       if (req.method === 'GET' && (pathname.endsWith('/sse') || req.headers.accept === 'text/event-stream')) {
         // Use our prefix-safe SSE transport wrapper
-        const transport = new PrefixSafeSSEServerTransport('messages', res);
+        const transport = new PrefixSafeSSEServerTransport('messages', res, req);
         const serverInstance = createServer();
         transports.set(transport.sessionId, { transport, server: serverInstance });
         
