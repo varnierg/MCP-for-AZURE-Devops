@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.2",
   "name": "mcp-azure-devops",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Azure DevOps Model Context Protocol Server",
   "homepage": "https://github.com/varnierg/MCP-for-AZURE-Devops",
   "long_description": "An advanced Model Context Protocol (MCP) server that connects AI assistants to Azure DevOps (formerly VSTS).\n\nIt exposes 23 specialized tools to manage work items (bugs, tasks, user stories), Git repositories, branches, commits, pull requests, PR review comments, pipelines, and search user identities.\n\nAdditionally, it contains an offline local database of the Azure DevOps REST API schemas and parameters, enabling the server to suggest the correct endpoints and perform generic REST requests dynamically.",

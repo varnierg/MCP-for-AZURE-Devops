@@ -38701,7 +38701,7 @@ function createServer2() {
   const server = new Server(
     {
       name: "mcp-azure-devops",
-      version: "1.0.0"
+      version: "1.0.2"
     },
     {
       capabilities: {
