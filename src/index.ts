@@ -890,6 +890,37 @@ function createServer(): Server {
   return server;
 }
 
+class PrefixSafeSSEServerTransport extends SSEServerTransport {
+  private _prefix: string;
+  private _res: http.ServerResponse;
+
+  constructor(endpoint: string, res: http.ServerResponse, prefix: string) {
+    super(endpoint, res);
+    this._prefix = prefix;
+    this._res = res;
+  }
+
+  override async start(): Promise<void> {
+    const self = this as any;
+    if (self._sseResponse) {
+      throw new Error('SSEServerTransport already started!');
+    }
+    this._res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive'
+    });
+
+    const relativeUrlWithSession = `${this._prefix}/messages?sessionId=${this.sessionId}`;
+    this._res.write(`event: endpoint\ndata: ${relativeUrlWithSession}\n\n`);
+    self._sseResponse = this._res;
+    this._res.on('close', () => {
+      self._sseResponse = undefined;
+      self.onclose?.();
+    });
+  }
+}
+
 async function main() {
   const args = process.argv;
   const getArgValue = (flag: string) => {
@@ -897,7 +928,11 @@ async function main() {
     return (idx !== -1 && idx < args.length - 1) ? args[idx + 1] : undefined;
   };
   const argPort = getArgValue('--port');
-  const portStr = argPort || process.env.MCP_PORT;
+  
+  // Only utilize process.env.PORT in cloud containers (Linux or Docker)
+  // to prevent port collisions in local Windows developer desktop environments.
+  const isCloudContainer = process.platform === 'linux' || fs.existsSync('/.dockerenv');
+  const portStr = argPort || (isCloudContainer ? process.env.PORT : undefined) || process.env.MCP_PORT;
 
   if (portStr) {
     const port = parseInt(portStr, 10);
@@ -905,7 +940,7 @@ async function main() {
 
     const httpServer = http.createServer(async (req, res) => {
       const parsedUrl = url.parse(req.url || '', true);
-      const pathname = parsedUrl.pathname;
+      const pathname = parsedUrl.pathname || '';
 
       // Enable CORS for browser-based clients (e.g. Smithery Sandbox/Toolbox)
       res.setHeader('Access-Control-Allow-Origin', '*');
@@ -919,9 +954,17 @@ async function main() {
         return;
       }
 
-      // Establish SSE connection
-      if (req.method === 'GET' && (pathname === '/sse' || (pathname === '/' && req.headers.accept === 'text/event-stream'))) {
-        const transport = new SSEServerTransport('/messages', res);
+      // Establish SSE connection (supporting subpath prefix suffix-matching)
+      if (req.method === 'GET' && (pathname.endsWith('/sse') || ((pathname === '/' || pathname === '') && req.headers.accept === 'text/event-stream'))) {
+        let prefix = '';
+        if (pathname.endsWith('/sse')) {
+          prefix = pathname.slice(0, -4);
+        } else if (pathname.endsWith('/')) {
+          prefix = pathname.slice(0, -1);
+        }
+
+        // Use our prefix-safe SSE transport wrapper
+        const transport = new PrefixSafeSSEServerTransport('messages', res, prefix);
         const serverInstance = createServer();
         transports.set(transport.sessionId, { transport, server: serverInstance });
         
@@ -933,8 +976,8 @@ async function main() {
         return;
       }
 
-      // Handle client incoming messages
-      if (req.method === 'POST' && pathname === '/messages') {
+      // Handle client incoming messages (supporting subpath prefix suffix-matching)
+      if (req.method === 'POST' && pathname.endsWith('/messages')) {
         const sessionId = parsedUrl.query.sessionId as string;
         if (!sessionId) {
           res.writeHead(400, { 'Content-Type': 'text/plain' });
@@ -965,8 +1008,8 @@ async function main() {
         return;
       }
 
-      // Serve well-known server card to skip dynamic scanning
-      if (req.method === 'GET' && (pathname === '/.well-known/mcp/server-card.json' || pathname === '/.well-known/mcp.json')) {
+      // Serve well-known server card to skip dynamic scanning (supporting subpath prefix suffix-matching)
+      if (req.method === 'GET' && (pathname.endsWith('/.well-known/mcp/server-card.json') || pathname.endsWith('/.well-known/mcp.json'))) {
         const filePath = path.join(__dirname, '..', '.well-known', 'mcp', 'server-card.json');
         fs.readFile(filePath, 'utf8', (err, data) => {
           if (err) {
@@ -980,8 +1023,8 @@ async function main() {
         return;
       }
 
-      // Simple health check
-      if (req.method === 'GET' && (pathname === '/' || pathname === '/health')) {
+      // Simple health check (supporting subpath prefix suffix-matching)
+      if (req.method === 'GET' && (pathname === '/' || pathname.endsWith('/health'))) {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('OK');
         return;

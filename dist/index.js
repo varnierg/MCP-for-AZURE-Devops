@@ -38713,6 +38713,36 @@ function createServer2() {
   server.setRequestHandler(CallToolRequestSchema, handleCallTool);
   return server;
 }
+var PrefixSafeSSEServerTransport = class extends SSEServerTransport {
+  _prefix;
+  _res;
+  constructor(endpoint, res, prefix) {
+    super(endpoint, res);
+    this._prefix = prefix;
+    this._res = res;
+  }
+  async start() {
+    const self2 = this;
+    if (self2._sseResponse) {
+      throw new Error("SSEServerTransport already started!");
+    }
+    this._res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive"
+    });
+    const relativeUrlWithSession = `${this._prefix}/messages?sessionId=${this.sessionId}`;
+    this._res.write(`event: endpoint
+data: ${relativeUrlWithSession}
+
+`);
+    self2._sseResponse = this._res;
+    this._res.on("close", () => {
+      self2._sseResponse = void 0;
+      self2.onclose?.();
+    });
+  }
+};
 async function main() {
   const args = process.argv;
   const getArgValue = (flag) => {
@@ -38720,13 +38750,14 @@ async function main() {
     return idx !== -1 && idx < args.length - 1 ? args[idx + 1] : void 0;
   };
   const argPort = getArgValue("--port");
-  const portStr = argPort || process.env.MCP_PORT;
+  const isCloudContainer = process.platform === "linux" || fs4.existsSync("/.dockerenv");
+  const portStr = argPort || (isCloudContainer ? process.env.PORT : void 0) || process.env.MCP_PORT;
   if (portStr) {
     const port = parseInt(portStr, 10);
     const transports = /* @__PURE__ */ new Map();
     const httpServer = http3.createServer(async (req, res) => {
       const parsedUrl = url2.parse(req.url || "", true);
-      const pathname = parsedUrl.pathname;
+      const pathname = parsedUrl.pathname || "";
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
       res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Mcp-Session-Id");
@@ -38736,8 +38767,14 @@ async function main() {
         res.end();
         return;
       }
-      if (req.method === "GET" && (pathname === "/sse" || pathname === "/" && req.headers.accept === "text/event-stream")) {
-        const transport = new SSEServerTransport("/messages", res);
+      if (req.method === "GET" && (pathname.endsWith("/sse") || (pathname === "/" || pathname === "") && req.headers.accept === "text/event-stream")) {
+        let prefix = "";
+        if (pathname.endsWith("/sse")) {
+          prefix = pathname.slice(0, -4);
+        } else if (pathname.endsWith("/")) {
+          prefix = pathname.slice(0, -1);
+        }
+        const transport = new PrefixSafeSSEServerTransport("messages", res, prefix);
         const serverInstance = createServer2();
         transports.set(transport.sessionId, { transport, server: serverInstance });
         res.on("close", () => {
@@ -38746,7 +38783,7 @@ async function main() {
         await serverInstance.connect(transport);
         return;
       }
-      if (req.method === "POST" && pathname === "/messages") {
+      if (req.method === "POST" && pathname.endsWith("/messages")) {
         const sessionId = parsedUrl.query.sessionId;
         if (!sessionId) {
           res.writeHead(400, { "Content-Type": "text/plain" });
@@ -38774,7 +38811,7 @@ async function main() {
         });
         return;
       }
-      if (req.method === "GET" && (pathname === "/.well-known/mcp/server-card.json" || pathname === "/.well-known/mcp.json")) {
+      if (req.method === "GET" && (pathname.endsWith("/.well-known/mcp/server-card.json") || pathname.endsWith("/.well-known/mcp.json"))) {
         const filePath = path4.join(__dirname, "..", ".well-known", "mcp", "server-card.json");
         fs4.readFile(filePath, "utf8", (err, data) => {
           if (err) {
@@ -38787,7 +38824,7 @@ async function main() {
         });
         return;
       }
-      if (req.method === "GET" && (pathname === "/" || pathname === "/health")) {
+      if (req.method === "GET" && (pathname === "/" || pathname.endsWith("/health"))) {
         res.writeHead(200, { "Content-Type": "text/plain" });
         res.end("OK");
         return;
