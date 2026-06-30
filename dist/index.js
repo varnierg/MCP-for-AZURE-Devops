@@ -38828,9 +38828,16 @@ async function main() {
       res.writeHead(404, { "Content-Type": "text/plain" });
       res.end("Not Found");
     });
-    httpServer.listen(port, "0.0.0.0", () => {
-      console.error(`[Azure DevOps MCP Server] Server running on SSE transport listening on port ${port}.`);
+    httpServer.on("error", (err) => {
+      console.error("[Azure DevOps MCP Server] HTTP server error:", err);
     });
+    try {
+      httpServer.listen(port, "0.0.0.0", () => {
+        console.error(`[Azure DevOps MCP Server] Server running on SSE transport listening on port ${port}.`);
+      });
+    } catch (err) {
+      console.error("[Azure DevOps MCP Server] Failed to bind HTTP server to port:", err);
+    }
   }
 }
 main().catch((err) => {
