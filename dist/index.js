@@ -3236,8 +3236,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path5) {
-      let input = path5;
+    function removeDotSegments(path4) {
+      let input = path4;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3489,8 +3489,8 @@ var require_schemes = __commonJS({
         wsComponent.secure = void 0;
       }
       if (wsComponent.resourceName) {
-        const [path5, query] = wsComponent.resourceName.split("?");
-        wsComponent.path = path5 && path5 !== "/" ? path5 : void 0;
+        const [path4, query] = wsComponent.resourceName.split("?");
+        wsComponent.path = path4 && path4 !== "/" ? path4 : void 0;
         wsComponent.query = query;
         wsComponent.resourceName = void 0;
       }
@@ -6884,12 +6884,12 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f;
     };
-    function addFormats(ajv, list, fs5, exportName) {
+    function addFormats(ajv, list, fs4, exportName) {
       var _a3;
       var _b;
       (_a3 = (_b = ajv.opts.code).formats) !== null && _a3 !== void 0 ? _a3 : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
       for (const f of list)
-        ajv.addFormat(f, fs5[f]);
+        ajv.addFormat(f, fs4[f]);
     }
     module2.exports = exports2 = formatsPlugin;
     Object.defineProperty(exports2, "__esModule", { value: true });
@@ -20672,11 +20672,11 @@ var require_mime_types = __commonJS({
       }
       return exts[0];
     }
-    function lookup(path5) {
-      if (!path5 || typeof path5 !== "string") {
+    function lookup(path4) {
+      if (!path4 || typeof path4 !== "string") {
         return false;
       }
-      var extension2 = extname("x." + path5).toLowerCase().substr(1);
+      var extension2 = extname("x." + path4).toLowerCase().substr(1);
       if (!extension2) {
         return false;
       }
@@ -21781,11 +21781,11 @@ var require_form_data = __commonJS({
     "use strict";
     var CombinedStream = require_combined_stream();
     var util4 = require("util");
-    var path5 = require("path");
+    var path4 = require("path");
     var http4 = require("http");
     var https2 = require("https");
     var parseUrl2 = require("url").parse;
-    var fs5 = require("fs");
+    var fs4 = require("fs");
     var Stream = require("stream").Stream;
     var crypto3 = require("crypto");
     var mime = require_mime_types();
@@ -21852,7 +21852,7 @@ var require_form_data = __commonJS({
         if (value.end != void 0 && value.end != Infinity && value.start != void 0) {
           callback(null, value.end + 1 - (value.start ? value.start : 0));
         } else {
-          fs5.stat(value.path, function(err, stat) {
+          fs4.stat(value.path, function(err, stat) {
             if (err) {
               callback(err);
               return;
@@ -21909,11 +21909,11 @@ var require_form_data = __commonJS({
     FormData3.prototype._getContentDisposition = function(value, options) {
       var filename;
       if (typeof options.filepath === "string") {
-        filename = path5.normalize(options.filepath).replace(/\\/g, "/");
+        filename = path4.normalize(options.filepath).replace(/\\/g, "/");
       } else if (options.filename || value && (value.name || value.path)) {
-        filename = path5.basename(options.filename || value && (value.name || value.path));
+        filename = path4.basename(options.filename || value && (value.name || value.path));
       } else if (value && value.readable && hasOwn(value, "httpVersion")) {
-        filename = path5.basename(value.client._httpMessage.path || "");
+        filename = path4.basename(value.client._httpMessage.path || "");
       }
       if (filename) {
         return 'filename="' + filename + '"';
@@ -23964,10 +23964,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path5) {
-  if (!path5)
+function getElementAtPath(obj, path4) {
+  if (!path4)
     return obj;
-  return path5.reduce((acc, key) => acc?.[key], obj);
+  return path4.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -24376,11 +24376,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path5, issues) {
+function prefixIssues(path4, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path5);
+    iss.path.unshift(path4);
     return iss;
   });
 }
@@ -24527,16 +24527,16 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
 }
 function formatError(error2, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error3, path5 = []) => {
+  const processError = (error3, path4 = []) => {
     for (const issue2 of error3.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path4, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
       } else {
-        const fullpath = [...path5, ...issue2.path];
+        const fullpath = [...path4, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -33622,10 +33622,10 @@ function isVisitable(thing) {
 function removeBrackets(key) {
   return utils_default.endsWith(key, "[]") ? key.slice(0, -2) : key;
 }
-function renderKey(path5, key, dots) {
-  if (!path5)
+function renderKey(path4, key, dots) {
+  if (!path4)
     return key;
-  return path5.concat(key).map(function each(token, i) {
+  return path4.concat(key).map(function each(token, i) {
     token = removeBrackets(token);
     return !dots && i ? "[" + token + "]" : token;
   }).join(dots ? "." : "");
@@ -33680,13 +33680,13 @@ function toFormData(obj, formData, options) {
     }
     return value;
   }
-  function defaultVisitor(value, key, path5) {
+  function defaultVisitor(value, key, path4) {
     let arr = value;
     if (utils_default.isReactNative(formData) && utils_default.isReactNativeBlob(value)) {
-      formData.append(renderKey(path5, key, dots), convertValue(value));
+      formData.append(renderKey(path4, key, dots), convertValue(value));
       return false;
     }
-    if (value && !path5 && typeof value === "object") {
+    if (value && !path4 && typeof value === "object") {
       if (utils_default.endsWith(key, "{}")) {
         key = metaTokens ? key : key.slice(0, -2);
         value = JSON.stringify(value);
@@ -33705,7 +33705,7 @@ function toFormData(obj, formData, options) {
     if (isVisitable(value)) {
       return true;
     }
-    formData.append(renderKey(path5, key, dots), convertValue(value));
+    formData.append(renderKey(path4, key, dots), convertValue(value));
     return false;
   }
   const stack = [];
@@ -33714,7 +33714,7 @@ function toFormData(obj, formData, options) {
     convertValue,
     isVisitable
   });
-  function build(value, path5, depth = 0) {
+  function build(value, path4, depth = 0) {
     if (utils_default.isUndefined(value))
       return;
     if (depth > maxDepth) {
@@ -33724,13 +33724,13 @@ function toFormData(obj, formData, options) {
       );
     }
     if (stack.indexOf(value) !== -1) {
-      throw new Error("Circular reference detected in " + path5.join("."));
+      throw new Error("Circular reference detected in " + path4.join("."));
     }
     stack.push(value);
     utils_default.forEach(value, function each(el, key) {
-      const result = !(utils_default.isUndefined(el) || el === null) && visitor.call(formData, el, utils_default.isString(key) ? key.trim() : key, path5, exposedHelpers);
+      const result = !(utils_default.isUndefined(el) || el === null) && visitor.call(formData, el, utils_default.isString(key) ? key.trim() : key, path4, exposedHelpers);
       if (result === true) {
-        build(el, path5 ? path5.concat(key) : [key], depth + 1);
+        build(el, path4 ? path4.concat(key) : [key], depth + 1);
       }
     });
     stack.pop();
@@ -33942,7 +33942,7 @@ var platform_default = {
 // node_modules/axios/lib/helpers/toURLEncodedForm.js
 function toURLEncodedForm(data, options) {
   return toFormData_default(data, new platform_default.classes.URLSearchParams(), {
-    visitor: function(value, key, path5, helpers) {
+    visitor: function(value, key, path4, helpers) {
       if (platform_default.isNode && utils_default.isBuffer(value)) {
         this.append(key, value.toString("base64"));
         return false;
@@ -33972,12 +33972,12 @@ function arrayToObject(arr) {
   return obj;
 }
 function formDataToJSON(formData) {
-  function buildPath(path5, value, target, index) {
-    let name = path5[index++];
+  function buildPath(path4, value, target, index) {
+    let name = path4[index++];
     if (name === "__proto__")
       return true;
     const isNumericKey = Number.isFinite(+name);
-    const isLast = index >= path5.length;
+    const isLast = index >= path4.length;
     name = !name && utils_default.isArray(target) ? target.length : name;
     if (isLast) {
       if (utils_default.hasOwnProp(target, name)) {
@@ -33990,7 +33990,7 @@ function formDataToJSON(formData) {
     if (!utils_default.hasOwnProp(target, name) || !utils_default.isObject(target[name])) {
       target[name] = [];
     }
-    const result = buildPath(path5, value, target[name], index);
+    const result = buildPath(path4, value, target[name], index);
     if (result && utils_default.isArray(target[name])) {
       target[name] = arrayToObject(target[name]);
     }
@@ -35487,9 +35487,9 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config2) {
       auth = urlUsername + ":" + urlPassword;
     }
     auth && headers.delete("authorization");
-    let path5;
+    let path4;
     try {
-      path5 = buildURL(
+      path4 = buildURL(
         parsed.pathname + parsed.search,
         config2.params,
         config2.paramsSerializer
@@ -35507,7 +35507,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config2) {
       false
     );
     const options = Object.assign(/* @__PURE__ */ Object.create(null), {
-      path: path5,
+      path: path4,
       method,
       headers: toByteStringHeaderObject(headers),
       agents: { http: config2.httpAgent, https: config2.httpsAgent },
@@ -35874,15 +35874,15 @@ var isURLSameOrigin_default = platform_default.hasStandardBrowserEnv ? /* @__PUR
 var cookies_default = platform_default.hasStandardBrowserEnv ? (
   // Standard browser envs support document.cookie
   {
-    write(name, value, expires, path5, domain, secure, sameSite) {
+    write(name, value, expires, path4, domain, secure, sameSite) {
       if (typeof document === "undefined")
         return;
       const cookie = [`${name}=${encodeURIComponent(value)}`];
       if (utils_default.isNumber(expires)) {
         cookie.push(`expires=${new Date(expires).toUTCString()}`);
       }
-      if (utils_default.isString(path5)) {
-        cookie.push(`path=${path5}`);
+      if (utils_default.isString(path4)) {
+        cookie.push(`path=${path4}`);
       }
       if (utils_default.isString(domain)) {
         cookie.push(`domain=${domain}`);
@@ -37884,8 +37884,1075 @@ async function fetchSingleApiInfoOnline(method, pathStr, version2) {
 // src/index.ts
 var http3 = __toESM(require("http"));
 var url2 = __toESM(require("url"));
-var fs4 = __toESM(require("fs"));
-var path4 = __toESM(require("path"));
+
+// .well-known/mcp/server-card.json
+var server_card_default = {
+  serverInfo: {
+    name: "mcp-azure-devops",
+    version: "1.0.0"
+  },
+  tools: [
+    {
+      name: "connection.configure",
+      description: "Configures Azure DevOps credentials (Username & PAT) for a specific organization/project URL. Must be called first if not configured.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "The project or dashboard URL (e.g. https://dev.azure.com/my-org/Test)"
+          },
+          username: {
+            type: "string",
+            description: "Your username or email"
+          },
+          token: {
+            type: "string",
+            description: "Your Personal Access Token (PAT)"
+          }
+        },
+        required: [
+          "url",
+          "username",
+          "token"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          message: {
+            type: "string",
+            description: "Confirmation message of the configuration success"
+          }
+        },
+        required: [
+          "message"
+        ]
+      },
+      annotations: {
+        title: "Configure Connection",
+        idempotentHint: true
+      }
+    },
+    {
+      name: "connection.test",
+      description: "Verifies connection to Azure DevOps for a configured organization.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          organization: {
+            type: "string",
+            description: "Optional organization name. If omitted, uses the default organization."
+          }
+        }
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          status: {
+            type: "string",
+            description: "Connection status (e.g. SUCCESS)"
+          },
+          message: {
+            type: "string",
+            description: "Detailed success message with authorized user and API version"
+          }
+        },
+        required: [
+          "status",
+          "message"
+        ]
+      },
+      annotations: {
+        title: "Test Connection",
+        idempotentHint: true
+      }
+    },
+    {
+      name: "api.call",
+      description: "Executes a generic Azure DevOps REST API call. Supports ALL DevOps endpoints. (Default API Version: 7.1)",
+      inputSchema: {
+        type: "object",
+        properties: {
+          method: {
+            type: "string",
+            enum: [
+              "GET",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE"
+            ],
+            description: "HTTP Method"
+          },
+          path: {
+            type: "string",
+            description: "API Path (e.g. /_apis/git/repositories or _apis/wit/workitems/123)"
+          },
+          body: {
+            type: "object",
+            description: "Optional request body JSON"
+          },
+          apiVersion: {
+            type: "string",
+            description: "Optional API version override (defaults to 7.1)"
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "method",
+          "path"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        description: "The raw JSON response from the Azure DevOps API"
+      },
+      annotations: {
+        title: "Call API"
+      }
+    },
+    {
+      name: "api.docs",
+      description: "Searches the local database of Azure DevOps APIs and parameters to find the correct endpoints offline.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: 'Search term (e.g., "pull requests", "workitems")'
+          },
+          area: {
+            type: "string",
+            description: 'Optional API area filter (e.g., "wit", "git", "pipelines")'
+          }
+        },
+        required: [
+          "query"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          endpoints: {
+            type: "array",
+            description: "List of matching API endpoints with description, parameters, and template URL",
+            items: {
+              type: "object"
+            }
+          }
+        },
+        required: [
+          "endpoints"
+        ]
+      },
+      annotations: {
+        title: "Search API Documentation",
+        readOnlyHint: true,
+        idempotentHint: true
+      }
+    },
+    {
+      name: "api.info",
+      description: "Gets full documentation for a specific Azure DevOps API endpoint. Checks the local database first and falls back to Microsoft specs online.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          method: {
+            type: "string",
+            enum: [
+              "GET",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE"
+            ],
+            description: "HTTP method of the API endpoint"
+          },
+          path: {
+            type: "string",
+            description: 'Full API path (e.g., "/_apis/git/repositories")'
+          }
+        },
+        required: [
+          "method",
+          "path"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          method: {
+            type: "string",
+            description: "HTTP method"
+          },
+          path: {
+            type: "string",
+            description: "API path template"
+          },
+          description: {
+            type: "string",
+            description: "Description of the endpoint"
+          },
+          parameters: {
+            type: "array",
+            description: "List of path, query, and body parameters"
+          }
+        },
+        required: [
+          "method",
+          "path"
+        ]
+      },
+      annotations: {
+        title: "Get API Info",
+        readOnlyHint: true,
+        idempotentHint: true
+      }
+    },
+    {
+      name: "workitem.get",
+      description: "Retrieves details for a specific Azure DevOps work item by ID.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: {
+            type: "number",
+            description: "Work Item ID"
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "id"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          id: {
+            type: "number",
+            description: "The work item ID"
+          },
+          fields: {
+            type: "object",
+            description: "Key-value pairs of all work item fields"
+          }
+        },
+        required: [
+          "id",
+          "fields"
+        ]
+      },
+      annotations: {
+        title: "Get Work Item",
+        readOnlyHint: true,
+        idempotentHint: true
+      }
+    },
+    {
+      name: "workitem.create",
+      description: "Creates a new work item (Bug, Task, User Story) in Azure DevOps.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          type: {
+            type: "string",
+            description: 'Work item type (e.g., "Bug", "Task", "User Story")'
+          },
+          title: {
+            type: "string",
+            description: "Title of the work item"
+          },
+          description: {
+            type: "string",
+            description: "Description or steps to reproduce (HTML or text)"
+          },
+          fields: {
+            type: "object",
+            description: 'Optional key-value object representing extra fields (e.g., {"System.AssignedTo": "user@email.com"})'
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "type",
+          "title"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          id: {
+            type: "number",
+            description: "The newly created work item ID"
+          },
+          fields: {
+            type: "object",
+            description: "Key-value pairs of the work item fields"
+          }
+        },
+        required: [
+          "id"
+        ]
+      },
+      annotations: {
+        title: "Create Work Item"
+      }
+    },
+    {
+      name: "workitem.update",
+      description: "Updates field values on an existing work item.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: {
+            type: "number",
+            description: "Work Item ID"
+          },
+          fields: {
+            type: "object",
+            description: 'Key-value object of fields to update (e.g., {"System.State": "Done", "System.AssignedTo": "user@email.com"})'
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "id",
+          "fields"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          id: {
+            type: "number",
+            description: "The updated work item ID"
+          },
+          fields: {
+            type: "object",
+            description: "Key-value pairs of the updated fields"
+          }
+        },
+        required: [
+          "id"
+        ]
+      },
+      annotations: {
+        title: "Update Work Item"
+      }
+    },
+    {
+      name: "workitem.query",
+      description: "Searches work items using Work Item Query Language (WIQL) and returns batch details.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          wiql: {
+            type: "string",
+            description: `WIQL query string (e.g., "Select [System.Id] From WorkItems Where [System.WorkItemType] = 'Bug'")`
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "wiql"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          workItems: {
+            type: "array",
+            description: "List of matching work items with their fields and IDs",
+            items: {
+              type: "object"
+            }
+          }
+        },
+        required: [
+          "workItems"
+        ]
+      },
+      annotations: {
+        title: "Query Work Items",
+        readOnlyHint: true,
+        idempotentHint: true
+      }
+    },
+    {
+      name: "workitem.comment",
+      description: "Adds a new discussion comment to a work item.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: {
+            type: "number",
+            description: "Work Item ID"
+          },
+          text: {
+            type: "string",
+            description: "Comment text"
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "id",
+          "text"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          id: {
+            type: "number",
+            description: "The comment ID"
+          },
+          text: {
+            type: "string",
+            description: "The comment content"
+          }
+        }
+      },
+      annotations: {
+        title: "Add Work Item Comment"
+      }
+    },
+    {
+      name: "workitem.link",
+      description: "Links two work items together using a relation type (e.g., Parent/Child, Duplicate, Related).",
+      inputSchema: {
+        type: "object",
+        properties: {
+          sourceId: {
+            type: "number",
+            description: "Source Work Item ID"
+          },
+          targetId: {
+            type: "number",
+            description: "Target Work Item ID"
+          },
+          relationType: {
+            type: "string",
+            description: 'Relation type (e.g., "System.LinkTypes.Hierarchy-Forward" for Child, "System.LinkTypes.Hierarchy-Reverse" for Parent, "System.LinkTypes.Related" for Related)'
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "sourceId",
+          "targetId",
+          "relationType"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        description: "JSON response containing the updated work item relations"
+      },
+      annotations: {
+        title: "Link Work Items"
+      }
+    },
+    {
+      name: "git.repos",
+      description: "Lists all Git repositories in the configured project.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        }
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          repositories: {
+            type: "array",
+            description: "List of repositories in the project",
+            items: {
+              type: "object"
+            }
+          }
+        },
+        required: [
+          "repositories"
+        ]
+      },
+      annotations: {
+        title: "List Repositories",
+        readOnlyHint: true,
+        idempotentHint: true
+      }
+    },
+    {
+      name: "git.file",
+      description: "Reads content of a file from an Azure DevOps Git repository.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          repositoryId: {
+            type: "string",
+            description: "Name or ID of the repository"
+          },
+          path: {
+            type: "string",
+            description: 'Path to the file (e.g. "/src/app.ts")'
+          },
+          branch: {
+            type: "string",
+            description: 'Branch name (defaults to "main")'
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "repositoryId",
+          "path"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          content: {
+            type: "string",
+            description: "The raw file content text"
+          }
+        },
+        required: [
+          "content"
+        ]
+      },
+      annotations: {
+        title: "Get Git File",
+        readOnlyHint: true,
+        idempotentHint: true
+      }
+    },
+    {
+      name: "git.push",
+      description: "Pushes file changes (adds, modifications, deletes) directly to a repository branch.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          repositoryId: {
+            type: "string",
+            description: "Name or ID of the repository"
+          },
+          branchName: {
+            type: "string",
+            description: "Target branch name"
+          },
+          commitMessage: {
+            type: "string",
+            description: "Commit message"
+          },
+          changes: {
+            type: "array",
+            description: "Array of file changes to apply in this commit",
+            items: {
+              type: "object",
+              properties: {
+                changeType: {
+                  type: "string",
+                  enum: [
+                    "add",
+                    "edit",
+                    "delete"
+                  ],
+                  description: "Type of change: add, edit, or delete"
+                },
+                path: {
+                  type: "string",
+                  description: 'File path in repo (e.g. "/newfile.txt")'
+                },
+                content: {
+                  type: "string",
+                  description: "File content (required for add/edit)"
+                }
+              },
+              required: [
+                "changeType",
+                "path"
+              ]
+            }
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "repositoryId",
+          "branchName",
+          "commitMessage",
+          "changes"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        description: "JSON response from the git push operation"
+      },
+      annotations: {
+        title: "Create Git Push"
+      }
+    },
+    {
+      name: "git.pr.create",
+      description: "Creates a Pull Request in a Git repository.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          repositoryId: {
+            type: "string",
+            description: "Name or ID of the repository"
+          },
+          sourceBranch: {
+            type: "string",
+            description: 'Source branch (e.g., "feature-branch")'
+          },
+          targetBranch: {
+            type: "string",
+            description: 'Target branch (e.g., "main")'
+          },
+          title: {
+            type: "string",
+            description: "PR Title"
+          },
+          description: {
+            type: "string",
+            description: "PR Description"
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "repositoryId",
+          "sourceBranch",
+          "targetBranch",
+          "title"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        description: "JSON response of the newly created pull request"
+      },
+      annotations: {
+        title: "Create Pull Request"
+      }
+    },
+    {
+      name: "git.pr.get",
+      description: "Gets details and status of a Pull Request.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          repositoryId: {
+            type: "string",
+            description: "Name or ID of the repository"
+          },
+          pullRequestId: {
+            type: "number",
+            description: "PR ID"
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "repositoryId",
+          "pullRequestId"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        description: "JSON response of the pull request details"
+      },
+      annotations: {
+        title: "Get Pull Request",
+        readOnlyHint: true,
+        idempotentHint: true
+      }
+    },
+    {
+      name: "git.pr.update",
+      description: "Updates a Pull Request status (active, abandoned, completed).",
+      inputSchema: {
+        type: "object",
+        properties: {
+          repositoryId: {
+            type: "string",
+            description: "Name or ID of the repository"
+          },
+          pullRequestId: {
+            type: "number",
+            description: "PR ID"
+          },
+          status: {
+            type: "string",
+            enum: [
+              "active",
+              "abandoned",
+              "completed"
+            ],
+            description: "Target status"
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "repositoryId",
+          "pullRequestId",
+          "status"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        description: "JSON response of the updated pull request"
+      },
+      annotations: {
+        title: "Update Pull Request"
+      }
+    },
+    {
+      name: "git.pr.comment.create",
+      description: "Creates an inline code review comment thread on a file and line number in a PR.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          repositoryId: {
+            type: "string",
+            description: "Name or ID of the repository"
+          },
+          pullRequestId: {
+            type: "number",
+            description: "PR ID"
+          },
+          filePath: {
+            type: "string",
+            description: "File path in the repo"
+          },
+          line: {
+            type: "number",
+            description: "Line number"
+          },
+          content: {
+            type: "string",
+            description: "Comment content"
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "repositoryId",
+          "pullRequestId",
+          "filePath",
+          "line",
+          "content"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        description: "JSON response of the newly created thread and comments"
+      },
+      annotations: {
+        title: "Create Pull Request Thread"
+      }
+    },
+    {
+      name: "git.pr.comment.list",
+      description: "Retrieves all threads and comments on a PR.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          repositoryId: {
+            type: "string",
+            description: "Name or ID of the repository"
+          },
+          pullRequestId: {
+            type: "number",
+            description: "PR ID"
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "repositoryId",
+          "pullRequestId"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          threads: {
+            type: "array",
+            description: "List of PR comment threads",
+            items: {
+              type: "object"
+            }
+          }
+        },
+        required: [
+          "threads"
+        ]
+      },
+      annotations: {
+        title: "List Pull Request Threads",
+        readOnlyHint: true,
+        idempotentHint: true
+      }
+    },
+    {
+      name: "pipeline.run",
+      description: "Triggers a run of a pipeline.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          pipelineId: {
+            type: "number",
+            description: "Pipeline ID"
+          },
+          variables: {
+            type: "object",
+            description: "Optional run-time variables key-value object"
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "pipelineId"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        description: "JSON response of the newly started run"
+      },
+      annotations: {
+        title: "Run Pipeline"
+      }
+    },
+    {
+      name: "pipeline.get",
+      description: "Retrieves status of a pipeline run.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          pipelineId: {
+            type: "number",
+            description: "Pipeline ID"
+          },
+          runId: {
+            type: "number",
+            description: "Run ID"
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "pipelineId",
+          "runId"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        description: "JSON response of the run status details"
+      },
+      annotations: {
+        title: "Get Pipeline Run",
+        readOnlyHint: true,
+        idempotentHint: true
+      }
+    },
+    {
+      name: "pipeline.logs",
+      description: "Retrieves combined log content for a pipeline run.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          pipelineId: {
+            type: "number",
+            description: "Pipeline ID"
+          },
+          runId: {
+            type: "number",
+            description: "Run ID"
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          },
+          project: {
+            type: "string",
+            description: "Optional project override"
+          }
+        },
+        required: [
+          "pipelineId",
+          "runId"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          logs: {
+            type: "string",
+            description: "The pipeline run log contents"
+          }
+        },
+        required: [
+          "logs"
+        ]
+      },
+      annotations: {
+        title: "Get Pipeline Run Logs",
+        readOnlyHint: true,
+        idempotentHint: true
+      }
+    },
+    {
+      name: "identity.search",
+      description: "Searches for users or groups in the organization by name or email.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Search query (name, email, etc.)"
+          },
+          organization: {
+            type: "string",
+            description: "Optional organization override"
+          }
+        },
+        required: [
+          "query"
+        ]
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          identities: {
+            type: "array",
+            description: "List of matching identities",
+            items: {
+              type: "object"
+            }
+          }
+        },
+        required: [
+          "identities"
+        ]
+      },
+      annotations: {
+        title: "Search Identities",
+        readOnlyHint: true,
+        idempotentHint: true
+      }
+    }
+  ]
+};
+
+// src/index.ts
 process.on("uncaughtException", (err) => {
   console.error("[CRITICAL] Uncaught Exception:", err.stack || err);
   process.exit(1);
@@ -38701,7 +39768,7 @@ function createServer2() {
   const server = new Server(
     {
       name: "mcp-azure-devops",
-      version: "1.0.2"
+      version: "1.0.3"
     },
     {
       capabilities: {
@@ -38749,7 +39816,7 @@ var PrefixSafeSSEServerTransport = class extends SSEServerTransport {
     if (prefix.endsWith("/")) {
       prefix = prefix.slice(0, -1);
     }
-    const relativeUrlWithSession = `${prefix}/messages?sessionId=${this.sessionId}`;
+    const relativeUrlWithSession = prefix ? `${prefix}/messages?sessionId=${this.sessionId}` : `messages?sessionId=${this.sessionId}`;
     this._res.write(`event: endpoint
 data: ${relativeUrlWithSession}
 
@@ -38789,16 +39856,8 @@ async function main() {
         return;
       }
       if (req.method === "GET" && (pathname.endsWith("/.well-known/mcp/server-card.json") || pathname.endsWith("/.well-known/mcp.json"))) {
-        const filePath = path4.join(__dirname, "..", ".well-known", "mcp", "server-card.json");
-        fs4.readFile(filePath, "utf8", (err, data) => {
-          if (err) {
-            res.writeHead(500, { "Content-Type": "text/plain" });
-            res.end(`Internal Server Error: ${err.message}`);
-            return;
-          }
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(data);
-        });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(server_card_default));
         return;
       }
       if (req.method === "GET" && (pathname.endsWith("/sse") || req.headers.accept === "text/event-stream")) {

@@ -1,7 +1,7 @@
 name: mcp-azure-devops
 displayName: Azure DevOps MCP Server
 description: A Model Context Protocol (MCP) server that enables AI assistants (such as Claude Desktop, Antigravity, etc.) to interact directly with Azure DevOps.
-version: 1.0.2
+version: 1.0.3
 author: Varnier Gatto <mcp_dev@jitime.com>
 license: MIT
 categories:

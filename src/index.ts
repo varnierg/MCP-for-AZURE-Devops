@@ -13,6 +13,7 @@ import * as http from 'http';
 import * as url from 'url';
 import * as fs from 'fs';
 import * as path from 'path';
+import serverCard from '../.well-known/mcp/server-card.json';
 
 // Global error handlers to capture and log any hidden startup exceptions
 process.on('uncaughtException', (err) => {
@@ -877,7 +878,7 @@ function createServer(): Server {
   const server = new Server(
     {
       name: 'mcp-azure-devops',
-      version: '1.0.2',
+      version: '1.0.3',
     },
     {
       capabilities: {
@@ -935,7 +936,7 @@ class PrefixSafeSSEServerTransport extends SSEServerTransport {
       prefix = prefix.slice(0, -1);
     }
 
-    const relativeUrlWithSession = `${prefix}/messages?sessionId=${this.sessionId}`;
+    const relativeUrlWithSession = prefix ? `${prefix}/messages?sessionId=${this.sessionId}` : `messages?sessionId=${this.sessionId}`;
     this._res.write(`event: endpoint\ndata: ${relativeUrlWithSession}\n\n`);
     self._sseResponse = this._res;
     this._res.on('close', () => {
@@ -988,16 +989,8 @@ async function main() {
 
       // Serve well-known server card to skip dynamic scanning (supporting subpath prefix suffix-matching)
       if (req.method === 'GET' && (pathname.endsWith('/.well-known/mcp/server-card.json') || pathname.endsWith('/.well-known/mcp.json'))) {
-        const filePath = path.join(__dirname, '..', '.well-known', 'mcp', 'server-card.json');
-        fs.readFile(filePath, 'utf8', (err, data) => {
-          if (err) {
-            res.writeHead(500, { 'Content-Type': 'text/plain' });
-            res.end(`Internal Server Error: ${err.message}`);
-            return;
-          }
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(data);
-        });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(serverCard));
         return;
       }
 
