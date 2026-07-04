@@ -1,4 +1,5 @@
 # Azure DevOps MCP Server
+**Latest Release:** `v1.0.8`
 
 [![smithery badge](https://smithery.ai/badge/github-y8ge/mcp-azure-devops)](https://smithery.ai/servers/github-y8ge/mcp-azure-devops)
 
@@ -84,6 +85,10 @@ To install Azure DevOps MCP Server for Claude Desktop automatically via [Smither
 ```bash
 npx -y @smithery/cli install github-y8ge/mcp-azure-devops --client claude
 ```
+
+> [!NOTE]
+> **Zero-Config Install**: The Smithery installation is completely zero-config and will not prompt you for any API keys or credentials.
+> Instead, credentials (organization, username, PAT) are configured dynamically by the AI agent itself at runtime using the `connection.configure` tool when first connecting to a new organization or project.
 
 ---
 
@@ -255,6 +260,10 @@ Per installare automaticamente Azure DevOps MCP Server per Claude Desktop tramit
 ```bash
 npx -y @smithery/cli install github-y8ge/mcp-azure-devops --client claude
 ```
+
+> [!NOTE]
+> **Installazione Zero-Config**: L'installazione tramite Smithery è completamente priva di configurazione iniziale e non ti chiederà chiavi API o credenziali.
+> Al contrario, le credenziali (organizzazione, username, PAT) vengono configurate dinamicamente dall'assistente IA stesso a runtime tramite lo strumento `connection.configure` durante la prima connessione a una nuova organizzazione o progetto.
 
 ---
 

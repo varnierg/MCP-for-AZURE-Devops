@@ -49,6 +49,10 @@ The easiest way to install and configure Azure DevOps MCP Server for Claude Desk
 npx -y @smithery/cli install github-y8ge/mcp-azure-devops --client claude
 ```
 
+> [!NOTE]
+> **Zero-Config Install**: The Smithery installation is completely zero-config and will not prompt you for any API keys or credentials.
+> Instead, credentials (organization, username, PAT) are configured dynamically by the AI agent itself at runtime using the `connection.configure` tool when first connecting to a new organization or project.
+
 ---
 
 ## 💻 4. Interactive Manual Setup

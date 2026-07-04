@@ -1,14 +1,15 @@
 {
   "manifest_version": "0.2",
   "name": "mcp-azure-devops",
-  "version": "1.0.3",
-  "description": "Azure DevOps Model Context Protocol Server",
+  "version": "1.0.8",
+  "description": "An advanced Model Context Protocol (MCP) server that connects AI assistants to Azure DevOps.",
+  "long_description": "This is a Model Context Protocol (MCP) server that enables AI assistants to interact directly with Azure DevOps. It provides a rich suite of tools to manage Work Items (Bugs, User Stories, Tasks), interact with Git repositories (read files, commit/push, manage Pull Requests), trigger and monitor Pipelines, and search for users or groups within the organization. Credentials are dynamically configured at runtime via connection tools, supporting multiple organizations and projects.",
   "homepage": "https://github.com/varnierg/MCP-for-AZURE-Devops",
-  "long_description": "An advanced Model Context Protocol (MCP) server that connects AI assistants to Azure DevOps (formerly VSTS).\n\nIt exposes 23 specialized tools to manage work items (bugs, tasks, user stories), Git repositories, branches, commits, pull requests, PR review comments, pipelines, and search user identities.\n\nAdditionally, it contains an offline local database of the Azure DevOps REST API schemas and parameters, enabling the server to suggest the correct endpoints and perform generic REST requests dynamically.",
   "author": {
     "name": "Varnier Gatto",
     "email": "mcp_dev@jitime.com"
   },
+  "icon": "icon.png",
   "server": {
     "type": "node",
     "entry_point": "dist/index.js",
@@ -16,41 +17,7 @@
       "command": "node",
       "args": [
         "${__dirname}/dist/index.js"
-      ],
-      "env": {
-        "AZURE_DEVOPS_ORG": "${user_config.organization}",
-        "AZURE_DEVOPS_USERNAME": "${user_config.username}",
-        "AZURE_DEVOPS_PAT": "${user_config.pat}",
-        "AZURE_DEVOPS_PROJECT": "${user_config.defaultProject}"
-      }
-    }
-  },
-  "user_config": {
-    "organization": {
-      "type": "string",
-      "title": "Organization",
-      "description": "Azure DevOps Organization name (e.g. 'myorg' or 'jitime')",
-      "required": false
-    },
-    "username": {
-      "type": "string",
-      "title": "Username",
-      "description": "Your Azure DevOps username or email",
-      "required": false
-    },
-    "pat": {
-      "type": "string",
-      "title": "Personal Access Token (PAT)",
-      "description": "Your Azure DevOps Personal Access Token (PAT)",
-      "sensitive": true,
-      "required": false
-    },
-    "defaultProject": {
-      "type": "string",
-      "title": "Default Project",
-      "description": "(Optional) The default project to use if not specified in tool calls",
-      "required": false,
-      "default": ""
+      ]
     }
   },
   "license": "MIT"
