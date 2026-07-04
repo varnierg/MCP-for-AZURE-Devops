@@ -38,7 +38,7 @@ commandFunction: |-
     return {
       command: 'node',
       args: [
-        'dist/index.js',
+        '/app/dist/index.js',
         '--port', '8080',
         '--org', c.organization || '',
         '--username', c.username || '',
