@@ -1,8 +1,8 @@
 {
   "manifest_version": "0.2",
   "name": "mcp-azure-devops",
-  "version": "1.0.8",
-  "description": "An advanced Model Context Protocol (MCP) server that connects AI assistants to Azure DevOps.",
+  "version": "1.0.9",
+  "description": "https://github.com/varnierg/MCP-for-AZURE-Devops",
   "long_description": "This is a Model Context Protocol (MCP) server that enables AI assistants to interact directly with Azure DevOps. It provides a rich suite of tools to manage Work Items (Bugs, User Stories, Tasks), interact with Git repositories (read files, commit/push, manage Pull Requests), trigger and monitor Pipelines, and search for users or groups within the organization. Credentials are dynamically configured at runtime via connection tools, supporting multiple organizations and projects.",
   "homepage": "https://github.com/varnierg/MCP-for-AZURE-Devops",
   "author": {

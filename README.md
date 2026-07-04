@@ -1,5 +1,5 @@
 # Azure DevOps MCP Server
-**Latest Release:** `v1.0.8`
+**Latest Release:** `v1.0.9`
 
 [![smithery badge](https://smithery.ai/badge/github-y8ge/mcp-azure-devops)](https://smithery.ai/servers/github-y8ge/mcp-azure-devops)
 
