@@ -6884,12 +6884,12 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f;
     };
-    function addFormats(ajv, list, fs5, exportName) {
+    function addFormats(ajv, list, fs4, exportName) {
       var _a3;
       var _b;
       (_a3 = (_b = ajv.opts.code).formats) !== null && _a3 !== void 0 ? _a3 : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
       for (const f of list)
-        ajv.addFormat(f, fs5[f]);
+        ajv.addFormat(f, fs4[f]);
     }
     module2.exports = exports2 = formatsPlugin;
     Object.defineProperty(exports2, "__esModule", { value: true });
@@ -21785,7 +21785,7 @@ var require_form_data = __commonJS({
     var http4 = require("http");
     var https2 = require("https");
     var parseUrl2 = require("url").parse;
-    var fs5 = require("fs");
+    var fs4 = require("fs");
     var Stream = require("stream").Stream;
     var crypto3 = require("crypto");
     var mime = require_mime_types();
@@ -21852,7 +21852,7 @@ var require_form_data = __commonJS({
         if (value.end != void 0 && value.end != Infinity && value.start != void 0) {
           callback(null, value.end + 1 - (value.start ? value.start : 0));
         } else {
-          fs5.stat(value.path, function(err, stat) {
+          fs4.stat(value.path, function(err, stat) {
             if (err) {
               callback(err);
               return;
@@ -37884,7 +37884,6 @@ async function fetchSingleApiInfoOnline(method, pathStr, version2) {
 // src/index.ts
 var http3 = __toESM(require("http"));
 var url2 = __toESM(require("url"));
-var fs4 = __toESM(require("fs"));
 
 // .well-known/mcp/server-card.json
 var server_card_default = {
@@ -39836,8 +39835,8 @@ async function main() {
     return idx !== -1 && idx < args.length - 1 ? args[idx + 1] : void 0;
   };
   const argPort = getArgValue("--port");
-  const isDocker = fs4.existsSync("/.dockerenv") || fs4.existsSync("/proc/1/cgroup") && fs4.readFileSync("/proc/1/cgroup", "utf8").includes("docker");
-  const portStr = argPort || process.env.PORT || process.env.MCP_PORT || (isDocker ? "8080" : void 0);
+  const isLocal = process.platform === "win32";
+  const portStr = argPort || process.env.PORT || process.env.MCP_PORT || (!isLocal ? "8080" : void 0);
   const stdioServerInstance = createServer2();
   const stdioTransport = new StdioServerTransport();
   await stdioServerInstance.connect(stdioTransport);

@@ -956,11 +956,10 @@ async function main() {
   
   // Always respect --port argument first.
   // Next, respect process.env.PORT or process.env.MCP_PORT if they are set.
-  // In Docker, default to port 8080 to allow Smithery's scanner to connect.
-  // Otherwise, do not start the HTTP/SSE server by default to prevent port conflicts for local stdio users.
-  const isDocker = fs.existsSync('/.dockerenv') || 
-    (fs.existsSync('/proc/1/cgroup') && fs.readFileSync('/proc/1/cgroup', 'utf8').includes('docker'));
-  const portStr = argPort || process.env.PORT || process.env.MCP_PORT || (isDocker ? '8080' : undefined);
+  // In the cloud (Linux container), default to port 8080 to allow Smithery's scanner to connect.
+  // Locally (Windows), do not start the HTTP/SSE server by default to prevent port conflicts for local stdio users.
+  const isLocal = process.platform === 'win32';
+  const portStr = argPort || process.env.PORT || process.env.MCP_PORT || (!isLocal ? '8080' : undefined);
 
   // Always start the default stdio server transport.
   // This ensures that even if we listen on HTTP/SSE (e.g. in cloud container),
