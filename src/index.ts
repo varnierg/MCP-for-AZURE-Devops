@@ -956,8 +956,7 @@ async function main() {
   
   // Always respect --port argument first.
   // Next, respect process.env.PORT or process.env.MCP_PORT if they are set.
-  // Finally, fallback to port 8080 as the default HTTP/SSE port.
-  const portStr = argPort || process.env.PORT || process.env.MCP_PORT || '8080';
+  const portStr = argPort || process.env.PORT || process.env.MCP_PORT;
 
   // Always start the default stdio server transport.
   // This ensures that even if we listen on HTTP/SSE (e.g. in cloud container),

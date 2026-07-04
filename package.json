@@ -1,6 +1,6 @@
 {
   "name": "mcp-azure-devops",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Azure DevOps Model Context Protocol Server",
   "repository": {
     "type": "git",
