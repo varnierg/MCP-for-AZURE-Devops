@@ -43,10 +43,11 @@ serverProcess.stdout.on('data', (data) => {
         // Handle tools/list response
         if (json.id === 2 && json.result && json.result.tools) {
           console.log('Received tools/list response.');
+          const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
           const card = {
             serverInfo: {
               name: 'mcp-azure-devops',
-              version: '1.0.0'
+              version: pkg.version || '1.0.10'
             },
             tools: json.result.tools
           };

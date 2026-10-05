@@ -4,7 +4,7 @@ This page lists all **23 tools** exposed by the Azure DevOps MCP server, grouped
 
 > [!CAUTION]
 > **CRITICAL WARNING: Destructive Actions & Work Item Deletions**
-> * Tools that modify data (e.g. `git.push`, `workitem.update`, `git.pr.update`) and the generic client `api.call` can perform destructive operations.
+> * Tools that modify data (e.g. `git_push`, `workitem_update`, `git_pr_update`) and the generic client `api_call` can perform destructive operations.
 > * **Azure DevOps does NOT keep a recycle bin or trashcan for work items deleted via the REST API.** Once deleted via the API, a work item is permanently lost and cannot be recovered. Ensure you double-check any deletion actions.
 
 ---
@@ -21,7 +21,7 @@ This page lists all **23 tools** exposed by the Azure DevOps MCP server, grouped
 
 ## 1. Configuration & Connection
 
-### `connection.configure`
+### `connection_configure`
 Configures and encrypts Azure DevOps credentials (Username & Personal Access Token) for a specific organization/project URL. Must be called before other tools if no prior configuration exists.
 * **Parameters**:
   * `url` (string, **required**): The project or dashboard URL (e.g. `https://dev.azure.com/my-org/Test`).
@@ -29,7 +29,7 @@ Configures and encrypts Azure DevOps credentials (Username & Personal Access Tok
   * `token` (string, **required**): Your Personal Access Token (PAT).
 * **Output**: A success message indicating that configuration was encrypted and saved.
 
-### `connection.test`
+### `connection_test`
 Verifies connection to Azure DevOps for a configured organization.
 * **Parameters**:
   * `organization` (string, optional): Organization name override. If omitted, uses the default organization.
@@ -39,7 +39,7 @@ Verifies connection to Azure DevOps for a configured organization.
 
 ## 2. Generic REST Client & API Directory
 
-### `api.call`
+### `api_call`
 Executes an arbitrary REST API call against Azure DevOps. Supports **all** DevOps endpoints.
 * **Parameters**:
   * `method` (string, **required**, enum: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`): The HTTP method.
@@ -50,14 +50,14 @@ Executes an arbitrary REST API call against Azure DevOps. Supports **all** DevOp
   * `project` (string, optional): Project name override.
 * **Output**: The JSON response returned by the Azure DevOps API.
 
-### `api.docs`
+### `api_docs`
 Searches the offline local database of Azure DevOps APIs and parameters to find the correct endpoint paths.
 * **Parameters**:
   * `query` (string, **required**): Search term (e.g., `"pull requests"`, `"workitems"`).
   * `area` (string, optional): Area filter (e.g., `"wit"`, `"git"`, `"pipelines"`).
 * **Output**: A list of matching endpoints, methods, and descriptions.
 
-### `api.info`
+### `api_info`
 Gets documentation for a specific API endpoint. Checks the local database first and falls back to Microsoft specs online.
 * **Parameters**:
   * `method` (string, **required**, enum: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`): The HTTP method.
@@ -68,7 +68,7 @@ Gets documentation for a specific API endpoint. Checks the local database first 
 
 ## 3. Work Item Tracking (WIT)
 
-### `workitem.get`
+### `workitem_get`
 Retrieves details for a specific Azure DevOps work item by ID.
 * **Parameters**:
   * `id` (number, **required**): Work Item ID.
@@ -76,7 +76,7 @@ Retrieves details for a specific Azure DevOps work item by ID.
   * `project` (string, optional): Project override.
 * **Output**: The work item object, including field values (System.Title, System.State, System.Description, etc.) and relations.
 
-### `workitem.create`
+### `workitem_create`
 Creates a new work item in Azure DevOps.
 * **Parameters**:
   * `type` (string, **required**): Work item type (e.g., `"Bug"`, `"Task"`, `"User Story"`).
@@ -87,7 +87,7 @@ Creates a new work item in Azure DevOps.
   * `project` (string, optional): Project override.
 * **Output**: The newly created work item details including its ID.
 
-### `workitem.update`
+### `workitem_update`
 Updates field values on an existing work item.
 * **Parameters**:
   * `id` (number, **required**): Work Item ID.
@@ -96,15 +96,15 @@ Updates field values on an existing work item.
   * `project` (string, optional): Project override.
 * **Output**: The updated work item details.
 
-### `workitem.query`
-Searches work items using Work Item Query Language (WIQL) and returns batch details.
+### `workitem_query`
+Searches work items using Work Item Query Language (WIQL), automatically scoping queries to the configured project (@project) and fetching work item details in batches of 200.
 * **Parameters**:
   * `wiql` (string, **required**): WIQL query string (e.g. `Select [System.Id] From WorkItems Where [System.WorkItemType] = 'Bug'`).
   * `organization` (string, optional): Organization override.
   * `project` (string, optional): Project override.
 * **Output**: A list of matching work items with their ID, Type, Title, State, and Assigned To fields.
 
-### `workitem.comment`
+### `workitem_comment`
 Adds a discussion comment to a work item.
 * **Parameters**:
   * `id` (number, **required**): Work Item ID.
@@ -113,7 +113,7 @@ Adds a discussion comment to a work item.
   * `project` (string, optional): Project override.
 * **Output**: The added comment details.
 
-### `workitem.link`
+### `workitem_link`
 Links two work items together using a relation type.
 * **Parameters**:
   * `sourceId` (number, **required**): Source Work Item ID.
@@ -127,14 +127,14 @@ Links two work items together using a relation type.
 
 ## 4. Git Integration
 
-### `git.repos`
+### `git_repos`
 Lists all Git repositories in the configured project.
 * **Parameters**:
   * `organization` (string, optional): Organization override.
   * `project` (string, optional): Project override.
 * **Output**: Array of repositories (Name, ID, URL).
 
-### `git.file`
+### `git_file`
 Reads the content of a file from an Azure DevOps Git repository.
 * **Parameters**:
   * `repositoryId` (string, **required**): Name or ID of the repository.
@@ -144,7 +144,7 @@ Reads the content of a file from an Azure DevOps Git repository.
   * `project` (string, optional): Project override.
 * **Output**: The text content of the file.
 
-### `git.push`
+### `git_push`
 Pushes file changes (additions, modifications, deletions) directly to a repository branch as a single push/commit.
 * **Parameters**:
   * `repositoryId` (string, **required**): Name or ID of the repository.
@@ -159,7 +159,7 @@ Pushes file changes (additions, modifications, deletions) directly to a reposito
   * `project` (string, optional): Project override.
 * **Output**: Push ID and commit details.
 
-### `git.pr.create`
+### `git_pr_create`
 Creates a Pull Request in a Git repository.
 * **Parameters**:
   * `repositoryId` (string, **required**): Name or ID of the repository.
@@ -171,7 +171,7 @@ Creates a Pull Request in a Git repository.
   * `project` (string, optional): Project override.
 * **Output**: Pull Request details including ID, URL, and Status.
 
-### `git.pr.get`
+### `git_pr_get`
 Gets details and status of a Pull Request.
 * **Parameters**:
   * `repositoryId` (string, **required**): Name or ID of the repository.
@@ -180,7 +180,7 @@ Gets details and status of a Pull Request.
   * `project` (string, optional): Project override.
 * **Output**: Pull Request details, status, merge status, and repository.
 
-### `git.pr.update`
+### `git_pr_update`
 Updates a Pull Request status (e.g., active, abandoned, completed).
 * **Parameters**:
   * `repositoryId` (string, **required**): Name or ID of the repository.
@@ -190,7 +190,7 @@ Updates a Pull Request status (e.g., active, abandoned, completed).
   * `project` (string, optional): Project override.
 * **Output**: The updated Pull Request status.
 
-### `git.pr.comment.create`
+### `git_pr_comment_create`
 Creates an inline code review comment thread on a file and line number in a PR.
 * **Parameters**:
   * `repositoryId` (string, **required**): Name or ID of the repository.
@@ -202,7 +202,7 @@ Creates an inline code review comment thread on a file and line number in a PR.
   * `project` (string, optional): Project override.
 * **Output**: Thread ID and comment details.
 
-### `git.pr.comment.list`
+### `git_pr_comment_list`
 Retrieves all comment threads and replies on a PR.
 * **Parameters**:
   * `repositoryId` (string, **required**): Name or ID of the repository.
@@ -215,7 +215,7 @@ Retrieves all comment threads and replies on a PR.
 
 ## 5. Pipeline Management
 
-### `pipeline.run`
+### `pipeline_run`
 Triggers a run of a pipeline.
 * **Parameters**:
   * `pipelineId` (number, **required**): Pipeline ID.
@@ -224,7 +224,7 @@ Triggers a run of a pipeline.
   * `project` (string, optional): Project override.
 * **Output**: Run details including ID, State, Result, and URL.
 
-### `pipeline.get`
+### `pipeline_get`
 Retrieves the status of a specific pipeline run.
 * **Parameters**:
   * `pipelineId` (number, **required**): Pipeline ID.
@@ -233,7 +233,7 @@ Retrieves the status of a specific pipeline run.
   * `project` (string, optional): Project override.
 * **Output**: Current state, result, creation time, and finished time.
 
-### `pipeline.logs`
+### `pipeline_logs`
 Retrieves combined log content for a pipeline run.
 * **Parameters**:
   * `pipelineId` (number, **required**): Pipeline ID.
@@ -246,7 +246,7 @@ Retrieves combined log content for a pipeline run.
 
 ## 6. Identity Search
 
-### `identity.search`
+### `identity_search`
 Searches for users or groups in the organization by name or email.
 * **Parameters**:
   * `query` (string, **required**): Search query (name, email, etc.).

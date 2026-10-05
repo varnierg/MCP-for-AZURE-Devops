@@ -13,3 +13,4 @@ server.json
 smithery-config-schema.json
 .gitignore
 LICENSE.txt
+*.docx
