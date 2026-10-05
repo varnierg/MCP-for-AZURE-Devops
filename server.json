@@ -3,7 +3,7 @@
   "name": "io.github.varnierg/mcp-azure-devops",
   "title": "Azure DevOps MCP Server",
   "description": "A Model Context Protocol server that enables AI assistants to interact directly with Azure DevOps.",
-  "version": "1.0.0",
+  "version": "1.0.10",
   "homepage": "https://github.com/varnierg/MCP-for-AZURE-Devops",
   "repository": {
     "url": "https://github.com/varnierg/MCP-for-AZURE-Devops"
@@ -15,7 +15,7 @@
     {
       "type": "npm",
       "name": "mcp-azure-devops",
-      "version": "1.0.0"
+      "version": "1.0.10"
     }
   ]
 }

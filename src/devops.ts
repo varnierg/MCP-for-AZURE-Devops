@@ -145,30 +145,58 @@ export class DevOpsClient {
   }
 
   public async queryWorkItems(wiql: string): Promise<any[]> {
+    let finalWiql = wiql.trim();
+
+    // Automatically scope to @project if a project is configured and the query doesn't already filter by TeamProject
+    if (this.project && !/System\.TeamProject|@project/i.test(finalWiql)) {
+      const tailMatch = finalWiql.match(/\b(ORDER\s+BY|ASOF)\b/i);
+      const splitIdx = tailMatch && tailMatch.index !== undefined ? tailMatch.index : finalWiql.length;
+      const mainPart = finalWiql.slice(0, splitIdx).trim();
+      const tailPart = finalWiql.slice(splitIdx).trim();
+
+      if (/\bWHERE\b/i.test(mainPart)) {
+        const whereReplaced = mainPart.replace(/\bWHERE\s+([\s\S]+)$/i, 'WHERE [System.TeamProject] = @project AND ($1)');
+        finalWiql = tailPart ? `${whereReplaced} ${tailPart}` : whereReplaced;
+      } else {
+        finalWiql = tailPart
+          ? `${mainPart} WHERE [System.TeamProject] = @project ${tailPart}`
+          : `${mainPart} WHERE [System.TeamProject] = @project`;
+      }
+    }
+
     const res = await this.request({
       url: `_apis/wit/wiql`,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       params: { 'api-version': '7.1' },
-      data: { query: wiql }
+      data: { query: finalWiql }
     });
 
     const workItems = res.data.workItems || [];
     if (workItems.length === 0) return [];
 
-    // Fetch details of all returned work items (batch fetch)
-    const ids = workItems.map((w: any) => w.id).join(',');
-    const detailsRes = await this.request({
-      url: `_apis/wit/workitems`,
-      method: 'GET',
-      params: {
-        ids,
-        fields: 'System.Id,System.Title,System.State,System.WorkItemType,System.AssignedTo',
-        'api-version': '7.1'
-      }
-    });
+    // Fetch details of all returned work items in batches of 200 (Azure DevOps API limit)
+    const allIds = workItems.map((w: any) => w.id);
+    const batchSize = 200;
+    const results: any[] = [];
 
-    return detailsRes.data.value || [];
+    for (let i = 0; i < allIds.length; i += batchSize) {
+      const ids = allIds.slice(i, i + batchSize).join(',');
+      const detailsRes = await this.request({
+        url: `_apis/wit/workitems`,
+        method: 'GET',
+        params: {
+          ids,
+          fields: 'System.Id,System.TeamProject,System.Title,System.State,System.WorkItemType,System.AssignedTo,System.Description',
+          'api-version': '7.1'
+        }
+      });
+      if (detailsRes.data && Array.isArray(detailsRes.data.value)) {
+        results.push(...detailsRes.data.value);
+      }
+    }
+
+    return results;
   }
 
   public async addWorkItemComment(id: number, text: string): Promise<any> {
