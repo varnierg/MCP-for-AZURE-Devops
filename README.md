@@ -1,5 +1,5 @@
 # Azure DevOps MCP Server
-**Latest Release:** `v1.0.10`
+**Latest Release:** `v1.1.0`
 
 [![smithery badge](https://smithery.ai/badge/github-y8ge/mcp-azure-devops)](https://smithery.ai/servers/github-y8ge/mcp-azure-devops)
 
@@ -157,6 +157,27 @@ Add the server to your Claude Desktop configuration file `claude_desktop_config.
 ```
 
 *Note: Replace `C:\\Path\\To\\Your\\MCP devops` with the actual absolute path to the project directory on your machine.*
+
+---
+
+### Remote Mode (HTTP)
+Starting the server with `--port <n>` (or `PORT` / `MCP_PORT`; Linux containers default to `8080`) exposes:
+- **Streamable HTTP** (current MCP spec) at `/mcp`
+- **Legacy SSE** at `/sse` + `/messages` (for older clients)
+- Server card at `/.well-known/mcp/server-card.json`
+
+| Variable / Flag | Description |
+|---|---|
+| `MCP_AUTH_TOKEN` / `--auth-token` | When set, MCP endpoints require `Authorization: Bearer <token>`. **Required** if you expose server-wide credentials on a public URL. |
+| `AZURE_DEVOPS_ORG`, `AZURE_DEVOPS_USERNAME`, `AZURE_DEVOPS_PAT` | Optional server-wide credentials (single-user deployment). |
+
+Per-session credentials (multi-user): each client can send `X-Azure-DevOps-Org`, `X-Azure-DevOps-PAT`, `X-Azure-DevOps-Username`, `X-Azure-DevOps-Project` headers (or the query params `organization`, `pat`, ... or `config=<base64 JSON>`, Smithery format). In remote mode `connection_configure` keeps credentials **in memory for that session only**, never on disk. Sessions idle for more than 30 minutes are dropped.
+
+```bash
+docker build -t mcp-azure-devops .
+docker run -p 8080:8080 -e MCP_AUTH_TOKEN=a-long-secret mcp-azure-devops
+# Client endpoint: http://localhost:8080/mcp
+```
 
 ---
 
@@ -332,6 +353,27 @@ Per utilizzare questo server all'interno di **Claude Desktop**, modifica il file
 ```
 
 *Nota: Sostituisci `C:\\Percorso\\Della\\Cartella\\MCP devops` con il percorso assoluto della cartella del progetto sul tuo computer.*
+
+---
+
+### Modalità Remota (HTTP)
+Avviando il server con `--port <n>` (o le variabili `PORT` / `MCP_PORT`; nei container Linux la porta predefinita è `8080`) vengono esposti:
+- **Streamable HTTP** (specifica MCP attuale) su `/mcp`
+- **SSE legacy** su `/sse` + `/messages` (per client meno recenti)
+- Server card su `/.well-known/mcp/server-card.json`
+
+| Variabile / Flag | Descrizione |
+|---|---|
+| `MCP_AUTH_TOKEN` / `--auth-token` | Se impostato, gli endpoint MCP richiedono `Authorization: Bearer <token>`. **Obbligatorio** se esponi credenziali globali su un URL pubblico. |
+| `AZURE_DEVOPS_ORG`, `AZURE_DEVOPS_USERNAME`, `AZURE_DEVOPS_PAT` | Credenziali globali opzionali (deployment a utente singolo). |
+
+Credenziali per singola sessione (multi-utente): ogni client può inviare gli header `X-Azure-DevOps-Org`, `X-Azure-DevOps-PAT`, `X-Azure-DevOps-Username`, `X-Azure-DevOps-Project` (in alternativa i parametri query `organization`, `pat`, ... o `config=<JSON base64>`, formato Smithery). In modalità remota `connection_configure` salva le credenziali **solo in memoria per quella sessione**, mai su disco. Le sessioni inattive da più di 30 minuti vengono eliminate.
+
+```bash
+docker build -t mcp-azure-devops .
+docker run -p 8080:8080 -e MCP_AUTH_TOKEN=un-segreto-lungo mcp-azure-devops
+# Endpoint client: http://localhost:8080/mcp
+```
 
 ---
 

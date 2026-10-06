@@ -1,0 +1,13 @@
+# Keep the build context small and free of secrets
+.git
+node_modules
+dist
+*.mcpb
+*.docx
+*.xlsx
+icon.png
+wiki
+.azure-devops-config.enc
+.antigravity-devops-key
+.env
+*.log

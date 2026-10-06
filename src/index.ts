@@ -2,17 +2,32 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  isInitializeRequest,
 } from '@modelcontextprotocol/sdk/types.js';
-import { getCredentialsForProject, addProjectConfig, loadConfig } from './config';
+import { getCredentialsForProject, addProjectConfig, loadConfig, parseProjectUrl } from './config';
+import { requestContext, RequestContext, createRemoteContext, extractCredentials, mergeCredentials } from './requestContext';
+import {
+  AuthConfig,
+  authenticateRequest,
+  getClientIp,
+  getIpLockoutRemainingSeconds,
+  recordAuthFailure,
+  clearAuthFailures,
+  getExternalBaseUrl,
+  buildProtectedResourceMetadata,
+  buildAuthServerMetadata,
+} from './auth';
 import { DevOpsClient } from './devops';
 import { checkAndUpdateDatabase, searchLocalDatabase, fetchSingleApiInfoOnline } from './docs/updater';
 import * as http from 'http';
 import * as url from 'url';
 import * as fs from 'fs';
 import * as path from 'path';
+import { randomUUID, timingSafeEqual } from 'crypto';
 import serverCard from '../.well-known/mcp/server-card.json';
 
 // Global error handlers to capture and log any hidden startup exceptions
@@ -630,6 +645,23 @@ const handleCallTool = async (request: any) => {
   if (name === 'connection_configure') {
     try {
       const { url, username, token } = anyArgs;
+      const ctx = requestContext.getStore();
+      if (ctx?.remote) {
+        // Hosted/HTTP mode: keep credentials in this MCP session only (never persisted to disk)
+        const parsed = parseProjectUrl(url);
+        ctx.creds.organization = parsed.organization;
+        ctx.creds.project = parsed.project || ctx.creds.project;
+        ctx.creds.username = username || '';
+        ctx.creds.pat = token;
+        return {
+          content: [{
+            type: 'text',
+            text: `Credentials stored for this session only. Organization: "${parsed.organization}"` +
+                  (parsed.project ? `, project: "${parsed.project}"` : '')
+          }]
+        };
+      }
+
       const parsed = addProjectConfig(url, username, token);
       
       // Perform background version check post-config
@@ -874,11 +906,11 @@ const handleCallTool = async (request: any) => {
   }
 };
 
-function createServer(): Server {
+function createServer(ctx?: RequestContext): Server {
   const server = new Server(
     {
       name: 'mcp-azure-devops',
-      version: '1.0.10',
+      version: '1.1.0',
     },
     {
       capabilities: {
@@ -886,9 +918,94 @@ function createServer(): Server {
       },
     }
   );
-  server.setRequestHandler(ListToolsRequestSchema, handleListTools);
-  server.setRequestHandler(CallToolRequestSchema, handleCallTool);
+  // Bind the per-session context (remote transports) to every handler invocation.
+  const bind = <T>(fn: (req: any) => Promise<T>) =>
+    (req: any) => (ctx ? requestContext.run(ctx, () => fn(req)) : fn(req));
+  server.setRequestHandler(ListToolsRequestSchema, bind(handleListTools));
+  server.setRequestHandler(CallToolRequestSchema, bind(async (req: any) =>
+    addStructuredContent(req?.params?.name, await handleCallTool(req))));
   return server;
+}
+
+/**
+ * Tools declaring an outputSchema must return `structuredContent` (MCP 2025-06-18+);
+ * current clients reject the result otherwise. Derive it from the text payload:
+ * JSON objects are used as-is, plain text is mapped onto the schema's required string field.
+ */
+function addStructuredContent(toolName: string, result: any): any {
+  if (!result || result.isError || result.structuredContent) return result;
+  const tool: any = TOOLS.find(t => t.name === toolName);
+  const schema = tool?.outputSchema;
+  if (!schema) return result;
+
+  const text: string = (result.content || []).filter((c: any) => c.type === 'text').map((c: any) => c.text).join('\n');
+  const required: string[] = schema.required || [];
+  let structured: Record<string, unknown> | undefined;
+  try {
+    const parsed = JSON.parse(text);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && required.every(k => k in parsed)) {
+      structured = parsed;
+    } else if (required.length === 0) {
+      structured = { result: parsed };
+    }
+  } catch {
+    // not JSON: handled below
+  }
+  if (!structured) {
+    structured = {};
+    for (const key of required) {
+      structured[key] = key === 'status' ? 'success' : text;
+    }
+    if (required.length === 0) structured.message = text;
+  }
+  return { ...result, structuredContent: structured };
+}
+
+/** Reads and parses a JSON request body (max 4 MB). */
+function readJsonBody(req: http.IncomingMessage): Promise<any> {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > 4 * 1024 * 1024) {
+        reject(new Error('Request body too large'));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => {
+      try {
+        const raw = Buffer.concat(chunks).toString('utf8');
+        resolve(raw ? JSON.parse(raw) : undefined);
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+function sendJsonRpcError(res: http.ServerResponse, status: number, code: number, message: string) {
+  if (res.headersSent) return;
+  res.writeHead(status, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ jsonrpc: '2.0', error: { code, message }, id: null }));
+}
+
+/**
+ * Optional bearer-token protection for the MCP endpoints.
+ * Enabled only when MCP_AUTH_TOKEN (or --auth-token) is set, so Smithery's
+ * credential-less scan keeps working when deployed there without a token.
+ */
+function isAuthorized(req: http.IncomingMessage, expectedToken: string | undefined): boolean {
+  if (!expectedToken) return true;
+  const header = req.headers['authorization'];
+  const value = Array.isArray(header) ? header[0] : header;
+  if (!value || !value.startsWith('Bearer ')) return false;
+  const provided = Buffer.from(value.slice(7).trim());
+  const expected = Buffer.from(expectedToken);
+  return provided.length === expected.length && timingSafeEqual(provided, expected);
 }
 
 class PrefixSafeSSEServerTransport extends SSEServerTransport {
@@ -971,21 +1088,65 @@ async function main() {
 
   if (portStr) {
     const port = parseInt(portStr, 10);
-    const transports = new Map<string, { transport: SSEServerTransport; server: Server }>();
+    const authToken = getArgValue('--auth-token') || process.env.MCP_AUTH_TOKEN || undefined;
+    const entraTenantId = getArgValue('--tenant-id') || process.env.ENTRA_TENANT_ID || process.env.AZURE_TENANT_ID || undefined;
+    const entraClientId = getArgValue('--client-id') || process.env.ENTRA_CLIENT_ID || process.env.AZURE_CLIENT_ID || undefined;
+    const allowedUsersRaw = getArgValue('--allowed-users') || process.env.ENTRA_ALLOWED_USERS || undefined;
+    const authCfg: AuthConfig = {
+      staticToken: authToken,
+      entraTenantId,
+      entraClientId,
+      allowedUsers: allowedUsersRaw ? allowedUsersRaw.split(',').map(s => s.trim()).filter(Boolean) : undefined,
+    };
+
+    if (!authCfg.staticToken && !authCfg.entraTenantId && !authCfg.entraClientId) {
+      console.error('[Azure DevOps MCP Server] WARNING: Neither MCP_AUTH_TOKEN nor ENTRA_TENANT_ID/ENTRA_CLIENT_ID is set. ' +
+        'HTTP endpoints are in open discovery mode (Smithery compatible).');
+    }
+
+    // Legacy SSE sessions (protocol 2024-11-05)
+    const transports = new Map<string, { transport: SSEServerTransport; server: Server; ctx: RequestContext }>();
+    // Streamable HTTP sessions (protocol 2025-03-26+)
+    const httpSessions = new Map<string, { transport: StreamableHTTPServerTransport; server: Server; ctx: RequestContext; lastSeen: number }>();
+
+    // Drop Streamable HTTP sessions idle for more than 30 minutes (frees memory and in-session credentials)
+    const SESSION_IDLE_MS = 30 * 60 * 1000;
+    setInterval(() => {
+      const now = Date.now();
+      for (const [id, s] of httpSessions) {
+        if (now - s.lastSeen > SESSION_IDLE_MS) {
+          httpSessions.delete(id);
+          s.transport.close().catch(() => {});
+        }
+      }
+    }, 5 * 60 * 1000).unref();
 
     const httpServer = http.createServer(async (req, res) => {
-      const parsedUrl = url.parse(req.url || '', true);
-      const pathname = parsedUrl.pathname || '';
+      const requestUrl = new URL(req.url || '/', 'http://localhost');
+      const pathname = requestUrl.pathname || '';
+      const query: Record<string, unknown> = Object.fromEntries(requestUrl.searchParams);
 
-      // Enable CORS for browser-based clients (e.g. Smithery Sandbox/Toolbox)
+      // Enable CORS for browser-based clients (e.g. Smithery Sandbox/Toolbox, OAuth clients)
       res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Mcp-Session-Id');
-      res.setHeader('Access-Control-Expose-Headers', 'Mcp-Session-Id');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers',
+        'Content-Type, Accept, Authorization, Mcp-Session-Id, Mcp-Protocol-Version, Last-Event-ID, ' +
+        'X-Azure-DevOps-Org, X-Azure-DevOps-Username, X-Azure-DevOps-PAT, X-Azure-DevOps-Project');
+      res.setHeader('Access-Control-Expose-Headers', 'Mcp-Session-Id, Mcp-Protocol-Version, WWW-Authenticate, Retry-After');
 
       if (req.method === 'OPTIONS') {
         res.writeHead(204);
         res.end();
+        return;
+      }
+
+      // Check per-IP failed-auth lockout FIRST (>5 auth failures in 10m -> 30m ban)
+      const clientIp = getClientIp(req);
+      const lockoutSec = getIpLockoutRemainingSeconds(clientIp);
+      if (lockoutSec > 0) {
+        res.setHeader('Retry-After', String(lockoutSec));
+        sendJsonRpcError(res, 429, -32002, `Too Many Requests: IP locked out due to repeated authentication failures. Retry in ${lockoutSec}s.`);
+        req.socket?.destroy();
         return;
       }
 
@@ -996,12 +1157,150 @@ async function main() {
         return;
       }
 
-      // Establish SSE connection (supporting subpath prefix suffix-matching and Accept header fallback)
-      if (req.method === 'GET' && (pathname.endsWith('/sse') || req.headers.accept === 'text/event-stream')) {
+      // Serve MCP OAuth 2.1 Protected Resource Metadata (RFC 9728) & Authorization Server Metadata (RFC 8414)
+      if (req.method === 'GET' && pathname.includes('/.well-known/oauth-protected-resource')) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(buildProtectedResourceMetadata(req, authCfg), null, 2));
+        return;
+      }
+      if (req.method === 'GET' && (pathname.includes('/.well-known/oauth-authorization-server') || pathname.includes('/.well-known/openid-configuration'))) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(buildAuthServerMetadata(req, authCfg), null, 2));
+        return;
+      }
+
+      const isMcpPath = pathname.endsWith('/mcp') || pathname === '/mcp' ||
+        (req.method === 'POST' && (pathname === '/' || pathname === ''));
+      const isSsePath = req.method === 'GET' && !isMcpPath &&
+        (pathname.endsWith('/sse') || req.headers.accept === 'text/event-stream');
+      const isMessagesPath = req.method === 'POST' && pathname.endsWith('/messages');
+
+      // Authenticate MCP transport endpoints (Microsoft Entra ID JWT, proxy principal headers, or Static Bearer token)
+      let authResult: { authorized: boolean; userPrincipalName?: string; entraAccessToken?: string; reason?: string } = { authorized: true };
+      if (isMcpPath || isSsePath || isMessagesPath) {
+        authResult = await authenticateRequest(req, authCfg);
+        if (!authResult.authorized) {
+          const failure = recordAuthFailure(clientIp, authResult.reason || 'Unauthorized');
+          if (failure.locked) {
+            res.setHeader('Retry-After', String(failure.retryAfterSeconds));
+            sendJsonRpcError(res, 429, -32002, `Too Many Requests: IP locked out after >5 failed authentication attempts in 10 minutes. Retry in ${failure.retryAfterSeconds}s.`);
+            req.socket?.destroy();
+            return;
+          }
+          const resourceMetaUrl = `${getExternalBaseUrl(req)}/.well-known/oauth-protected-resource`;
+          res.setHeader('WWW-Authenticate', `Bearer resource_metadata="${resourceMetaUrl}"`);
+          sendJsonRpcError(res, 401, -32001, 'Unauthorized: valid Microsoft Entra ID token or Bearer token required');
+          return;
+        }
+        clearAuthFailures(clientIp);
+      }
+
+      // Helper: merge request credentials + Microsoft Entra ID OAuth token (if present) into session
+      const applyRequestCreds = (targetCtx: RequestContext) => {
+        const incomingCreds = extractCredentials(req, query);
+        mergeCredentials(targetCtx.creds, incomingCreds);
+        if (authResult.entraAccessToken && !incomingCreds.pat) {
+          targetCtx.creds.pat = authResult.entraAccessToken;
+          if (authResult.userPrincipalName && !targetCtx.creds.username) {
+            targetCtx.creds.username = authResult.userPrincipalName;
+          }
+          // Default to server-configured org/project if session hasn't set one yet
+          if (!targetCtx.creds.organization && (process.env.AZURE_DEVOPS_ORG || process.env.AZURE_DEVOPS_ORGANIZATION)) {
+            targetCtx.creds.organization = process.env.AZURE_DEVOPS_ORG || process.env.AZURE_DEVOPS_ORGANIZATION;
+          }
+          if (!targetCtx.creds.project && process.env.AZURE_DEVOPS_PROJECT) {
+            targetCtx.creds.project = process.env.AZURE_DEVOPS_PROJECT;
+          }
+        }
+      };
+
+      // Streamable HTTP transport (current MCP spec): POST/GET/DELETE on /mcp
+      if (isMcpPath) {
+        try {
+          const headerSessionId = req.headers['mcp-session-id'];
+          const sessionId = Array.isArray(headerSessionId) ? headerSessionId[0] : headerSessionId;
+
+          if (req.method === 'POST') {
+            let body: any;
+            try {
+              body = await readJsonBody(req);
+            } catch (e: any) {
+              sendJsonRpcError(res, 400, -32700, `Parse error: ${e.message}`);
+              return;
+            }
+
+            if (sessionId) {
+              const session = httpSessions.get(sessionId);
+              if (!session) {
+                // Spec: unknown/expired session -> 404 so the client re-initializes
+                sendJsonRpcError(res, 404, -32001, 'Session not found');
+                return;
+              }
+              session.lastSeen = Date.now();
+              applyRequestCreds(session.ctx);
+              await session.transport.handleRequest(req, res, body);
+              return;
+            }
+
+            const isInit = Array.isArray(body) ? body.some(m => isInitializeRequest(m)) : isInitializeRequest(body);
+            if (!isInit) {
+              sendJsonRpcError(res, 400, -32000, 'Bad Request: missing Mcp-Session-Id header (send initialize first)');
+              return;
+            }
+
+            const ctx = createRemoteContext();
+            applyRequestCreds(ctx);
+            const serverInstance = createServer(ctx);
+            const transport = new StreamableHTTPServerTransport({
+              sessionIdGenerator: () => randomUUID(),
+              onsessioninitialized: (id: string) => {
+                httpSessions.set(id, { transport, server: serverInstance, ctx, lastSeen: Date.now() });
+              },
+            });
+            transport.onclose = () => {
+              if (transport.sessionId) httpSessions.delete(transport.sessionId);
+            };
+            await serverInstance.connect(transport);
+            await transport.handleRequest(req, res, body);
+            return;
+          }
+
+          if (req.method === 'GET' || req.method === 'DELETE') {
+            const session = sessionId ? httpSessions.get(sessionId) : undefined;
+            if (!session) {
+              if (req.method === 'GET' && !sessionId) {
+                // Plain browser/health GET on /mcp without a session
+                res.writeHead(405, { 'Content-Type': 'application/json', Allow: 'POST, GET, DELETE' });
+                res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32000, message: 'Method not allowed without Mcp-Session-Id. Use POST to initialize.' }, id: null }));
+                return;
+              }
+              sendJsonRpcError(res, sessionId ? 404 : 400, -32001, sessionId ? 'Session not found' : 'Missing Mcp-Session-Id header');
+              return;
+            }
+            session.lastSeen = Date.now();
+            applyRequestCreds(session.ctx);
+            await session.transport.handleRequest(req, res);
+            if (req.method === 'DELETE') httpSessions.delete(sessionId!);
+            return;
+          }
+
+          res.writeHead(405, { 'Content-Type': 'text/plain', Allow: 'POST, GET, DELETE' });
+          res.end('Method Not Allowed');
+        } catch (err: any) {
+          console.error('[Azure DevOps MCP Server] Streamable HTTP error:', err);
+          sendJsonRpcError(res, 500, -32603, 'Internal server error');
+        }
+        return;
+      }
+
+      // Legacy SSE transport (kept for older clients and existing Smithery deployments)
+      if (isSsePath) {
         // Use our prefix-safe SSE transport wrapper
         const transport = new PrefixSafeSSEServerTransport('messages', res, req);
-        const serverInstance = createServer();
-        transports.set(transport.sessionId, { transport, server: serverInstance });
+        const ctx = createRemoteContext();
+        applyRequestCreds(ctx);
+        const serverInstance = createServer(ctx);
+        transports.set(transport.sessionId, { transport, server: serverInstance, ctx });
         
         res.on('close', () => {
           transports.delete(transport.sessionId);
@@ -1011,9 +1310,9 @@ async function main() {
         return;
       }
 
-      // Handle client incoming messages (supporting subpath prefix suffix-matching)
-      if (req.method === 'POST' && pathname.endsWith('/messages')) {
-        const sessionId = parsedUrl.query.sessionId as string;
+      // Handle legacy SSE client incoming messages (supporting subpath prefix suffix-matching)
+      if (isMessagesPath) {
+        const sessionId = query.sessionId as string;
         if (!sessionId) {
           res.writeHead(400, { 'Content-Type': 'text/plain' });
           res.end('Missing sessionId parameter');
@@ -1027,19 +1326,16 @@ async function main() {
           return;
         }
 
-        let bodyStr = '';
-        req.on('data', chunk => {
-          bodyStr += chunk;
-        });
-        req.on('end', async () => {
-          try {
-            const body = JSON.parse(bodyStr);
-            await session.transport.handlePostMessage(req, res, body);
-          } catch (err: any) {
+        try {
+          applyRequestCreds(session.ctx);
+          const body = await readJsonBody(req);
+          await session.transport.handlePostMessage(req, res, body);
+        } catch (err: any) {
+          if (!res.headersSent) {
             res.writeHead(400, { 'Content-Type': 'text/plain' });
             res.end(`Invalid JSON body: ${err.message}`);
           }
-        });
+        }
         return;
       }
 
@@ -1054,13 +1350,23 @@ async function main() {
       res.end('Not Found');
     });
 
+    // Harden HTTP server against slowloris / idle connection abuse
+    httpServer.headersTimeout = 10 * 1000;      // 10s to receive HTTP headers
+    httpServer.requestTimeout = 30 * 1000;      // 30s max per request
+    httpServer.keepAliveTimeout = 5 * 1000;     // 5s keep-alive idle timeout
+
     httpServer.on('error', (err) => {
       console.error('[Azure DevOps MCP Server] HTTP server error:', err);
     });
 
     try {
       httpServer.listen(port, '0.0.0.0', () => {
-        console.error(`[Azure DevOps MCP Server] Server running on SSE transport listening on port ${port}.`);
+        const modes = [
+          authCfg.entraTenantId || authCfg.entraClientId ? `Microsoft Entra ID (tenant=${authCfg.entraTenantId || 'common'})` : '',
+          authCfg.staticToken ? 'Bearer token' : '',
+        ].filter(Boolean).join(' + ');
+        console.error(`[Azure DevOps MCP Server] HTTP listening on port ${port}: Streamable HTTP at /mcp, legacy SSE at /sse` +
+          (modes ? ` [Auth: ${modes}, RateLimit: >5 fails/10m -> 30m lockout].` : ' [Open discovery mode].'));
       });
     } catch (err) {
       console.error('[Azure DevOps MCP Server] Failed to bind HTTP server to port:', err);

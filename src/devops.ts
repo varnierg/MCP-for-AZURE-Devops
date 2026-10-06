@@ -15,6 +15,10 @@ export class DevOpsClient {
   }
 
   private getAuthHeader(): string {
+    // Microsoft Entra ID OAuth access tokens (JWTs) start with "eyJ" and have 3 dot-separated parts
+    if (this.pat.startsWith('eyJ') && this.pat.split('.').length === 3) {
+      return `Bearer ${this.pat}`;
+    }
     const token = Buffer.from(`${this.username}:${this.pat}`).toString('base64');
     return `Basic ${token}`;
   }

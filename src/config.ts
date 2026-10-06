@@ -1,5 +1,6 @@
 // Author Varnier Gatto and Gemini, e-mail: mcp_dev@jitime.com
 import * as fs from 'fs';
+import { requestContext } from './requestContext';
 import * as path from 'path';
 import { getEncryptionKey, generateAndSaveKey, encrypt, decrypt } from './crypto';
 
@@ -156,6 +157,22 @@ export function getCredentialsForProject(
   projectPath?: string,
   orgName?: string
 ): { organization: string; project: string; username: string; pat: string } | null {
+  // Remote HTTP sessions: prefer credentials scoped to this MCP session
+  const ctx = requestContext.getStore();
+  if (ctx?.remote) {
+    const s = ctx.creds;
+    if (s.organization && s.pat) {
+      if (!orgName || orgName.toLowerCase() === s.organization.toLowerCase()) {
+        return {
+          organization: orgName || s.organization,
+          project: projectPath || s.project || '',
+          username: s.username || '',
+          pat: s.pat
+        };
+      }
+    }
+  }
+
   // Check command-line arguments and environment variables
   const args = process.argv;
   const getArgValue = (flag: string) => {
