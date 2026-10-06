@@ -1,5 +1,5 @@
 # Azure DevOps MCP Server
-**Latest Release:** `v1.1.1`
+**Latest Release:** `v1.1.2`
 
 [![smithery badge](https://smithery.ai/badge/github-y8ge/mcp-azure-devops)](https://smithery.ai/servers/github-y8ge/mcp-azure-devops)
 
@@ -172,7 +172,9 @@ The server can also expose its tools over HTTP, so that one instance can be shar
 | `/mcp` | **Streamable HTTP** (current MCP specification) |
 | `/sse` + `/messages` | **Legacy SSE** (older clients) |
 | `/.well-known/mcp/server-card.json` | Server card |
-| `/.well-known/oauth-protected-resource` | OAuth metadata for Microsoft Entra ID sign-in |
+| `/.well-known/oauth-protected-resource` | OAuth 2.1 protected-resource metadata (RFC 9728) |
+| `/.well-known/oauth-authorization-server` | OAuth 2.0 authorization-server metadata (RFC 8414) |
+| `/oauth/authorize` + `/oauth/token` | OAuth 2.0 proxy endpoints for Microsoft Entra ID v2.0 (strip RFC 8707 `resource` parameter and normalize Azure DevOps scopes) |
 
 **Authentication of the MCP endpoint** (combinable):
 
@@ -183,7 +185,7 @@ The server can also expose its tools over HTTP, so that one instance can be shar
 | `ENTRA_CLIENT_ID` / `--client-id` | Also accept tokens issued for your Entra app registration. |
 | `ENTRA_ALLOWED_USERS` / `--allowed-users` | Optional comma-separated allow-list of user e-mails/UPNs. |
 
-Without any of them the server runs in **open mode** (only for localhost/testing). More than 5 failed authentication attempts from an IP within 10 minutes lock that IP out for 30 minutes. An Entra ID token issued for Azure DevOps is also used to call Azure DevOps on behalf of the user, so no PAT is needed.
+Without any of them the server runs in **open mode** (only for localhost/testing). More than 5 failed authentication attempts (with an invalid `Authorization` header) from an IP within 10 minutes lock that IP out for 30 minutes; unauthenticated OAuth discovery probes return `401 WWW-Authenticate` without counting toward the lockout. An Entra ID token issued for Azure DevOps is also used to call Azure DevOps on behalf of the user, so no PAT is needed.
 
 **Azure DevOps credentials**:
 - **Per session (multi-user)**: headers `X-Azure-DevOps-Org`, `X-Azure-DevOps-PAT`, `X-Azure-DevOps-Username`, `X-Azure-DevOps-Project` (recommended), or query parameters `organization`, `pat`, … / `config=<base64 JSON>` (Smithery format). `connection_configure` keeps credentials **in memory for that session only**, never on disk. Sessions idle for more than 30 minutes are dropped.
@@ -405,7 +407,9 @@ Il server può esporre gli stessi strumenti anche via HTTP, così un'unica istan
 | `/mcp` | **Streamable HTTP** (specifica MCP attuale) |
 | `/sse` + `/messages` | **SSE legacy** (client meno recenti) |
 | `/.well-known/mcp/server-card.json` | Server card |
-| `/.well-known/oauth-protected-resource` | Metadati OAuth per l'accesso con Microsoft Entra ID |
+| `/.well-known/oauth-protected-resource` | Metadati risorsa protetta OAuth 2.1 (RFC 9728) |
+| `/.well-known/oauth-authorization-server` | Metadati authorization server OAuth 2.0 (RFC 8414) |
+| `/oauth/authorize` + `/oauth/token` | Endpoint proxy OAuth 2.0 per Microsoft Entra ID v2.0 (rimuovono il parametro `resource` RFC 8707 e normalizzano gli scope Azure DevOps) |
 
 **Autenticazione dell'endpoint MCP** (combinabili):
 
@@ -416,7 +420,7 @@ Il server può esporre gli stessi strumenti anche via HTTP, così un'unica istan
 | `ENTRA_CLIENT_ID` / `--client-id` | Accetta anche i token emessi per la tua app registration Entra. |
 | `ENTRA_ALLOWED_USERS` / `--allowed-users` | Elenco opzionale (separato da virgole) di email/UPN autorizzati. |
 
-Senza nessuna di queste opzioni il server funziona in **modalità aperta** (solo per localhost/test). Più di 5 tentativi di autenticazione falliti da uno stesso IP in 10 minuti bloccano quell'IP per 30 minuti. Un token Entra ID emesso per Azure DevOps viene usato anche per chiamare Azure DevOps per conto dell'utente, senza bisogno di PAT.
+Senza nessuna di queste opzioni il server funziona in **modalità aperta** (solo per localhost/test). Più di 5 tentativi di autenticazione falliti (con un header `Authorization` non valido) da uno stesso IP in 10 minuti bloccano quell'IP per 30 minuti; le sonde di discovery OAuth prive di autenticazione restituiscono `401 WWW-Authenticate` senza essere conteggiate nel blocco. Un token Entra ID emesso per Azure DevOps viene usato anche per chiamare Azure DevOps per conto dell'utente, senza bisogno di PAT.
 
 **Credenziali Azure DevOps**:
 - **Per sessione (multi-utente)**: header `X-Azure-DevOps-Org`, `X-Azure-DevOps-PAT`, `X-Azure-DevOps-Username`, `X-Azure-DevOps-Project` (consigliati), oppure parametri query `organization`, `pat`, … / `config=<JSON base64>` (formato Smithery). `connection_configure` mantiene le credenziali **solo in memoria per quella sessione**, mai su disco. Le sessioni inattive da più di 30 minuti vengono eliminate.

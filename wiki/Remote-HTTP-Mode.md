@@ -35,7 +35,8 @@ node dist/index.js --port 8080 --host 0.0.0.0 --auth-token a-long-random-secret
 | `GET /sse` + `POST /messages?sessionId=…` | **Legacy SSE** transport (protocol `2024-11-05`, for older clients) |
 | `GET /.well-known/mcp/server-card.json` | Server card (name, version, tool list) |
 | `GET /.well-known/oauth-protected-resource` | OAuth 2.1 protected-resource metadata (RFC 9728) |
-| `GET /.well-known/oauth-authorization-server` | Authorization-server metadata pointing to Microsoft Entra ID (RFC 8414) |
+| `GET /.well-known/oauth-authorization-server` | OAuth 2.0 authorization-server metadata (RFC 8414, also served at `/.well-known/openid-configuration`) |
+| `GET /oauth/authorize` + `POST /oauth/token` | OAuth 2.0 proxy endpoints for Microsoft Entra ID v2.0 (strip RFC 8707 `resource` parameter and normalize Azure DevOps scopes) |
 | `GET /` (any other path) | Health check, returns `OK` |
 
 ---
@@ -53,13 +54,14 @@ Authentication protects `/mcp`, `/sse` and `/messages`. You can combine the opti
 
 If **none** of them is set, the server starts in **open mode** (and logs a warning). Use open mode only on `localhost` or for testing.
 
-**Brute-force protection**: more than 5 failed authentication attempts from the same IP within 10 minutes lock that IP out for 30 minutes (HTTP `429` with `Retry-After`).
+**Brute-force protection**: more than 5 failed authentication attempts (requests carrying an invalid `Authorization` header) from the same IP within 10 minutes lock that IP out for 30 minutes (HTTP `429` with `Retry-After`). Unauthenticated requests without an `Authorization` header are treated as RFC 9728 OAuth discovery probes and return `401 WWW-Authenticate` without counting toward the lockout.
 
-### Microsoft Entra ID tokens
+### Microsoft Entra ID tokens & OAuth 2.0 proxy
 
 - Tokens are validated locally (RS256 signature against Microsoft's public keys, expiry, tenant, audience, optional user allow-list).
 - If the token was issued for the **Azure DevOps** resource (`499b84ac-1321-427f-aa17-267ca6975798`), it is also used to call the Azure DevOps APIs on behalf of the signed-in user, so **no PAT is needed**. Provide the organization via the `X-Azure-DevOps-Org` header or the `AZURE_DEVOPS_ORG` variable.
-- MCP clients that support OAuth discover the sign-in flow automatically via `/.well-known/oauth-protected-resource` (returned in the `WWW-Authenticate` header of a `401` response).
+- MCP clients that support OAuth discover the sign-in flow automatically via `/.well-known/oauth-protected-resource` (returned in the `WWW-Authenticate` header of a `401` response) and `/.well-known/oauth-authorization-server`.
+- Because Microsoft Entra ID v2.0 rejects the RFC 8707 `resource` parameter (`AADSTS9010010`) sent by standard MCP OAuth clients, the built-in `/oauth/authorize` and `/oauth/token` endpoints strip `resource` and normalize the `scope` parameter (`499b84ac-1321-427f-aa17-267ca6975798/.default offline_access`) before redirecting/proxying to Microsoft Entra ID.
 
 ---
 

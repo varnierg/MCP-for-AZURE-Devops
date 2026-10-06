@@ -42435,17 +42435,14 @@ function getExternalBaseUrl(req) {
 }
 function buildProtectedResourceMetadata(req, cfg) {
   const baseUrl = getExternalBaseUrl(req);
-  const tenant = cfg.entraTenantId || "common";
   const scopes = [
-    `${AZURE_DEVOPS_RESOURCE_ID}/user_impersonation`,
-    "openid",
-    "profile",
+    "499b84ac-1321-427f-aa17-267ca6975798/.default",
     "offline_access"
   ];
   return {
     resource: `${baseUrl}/mcp`,
     authorization_servers: [
-      `https://login.microsoftonline.com/${tenant}/v2.0`
+      baseUrl
     ],
     scopes_supported: scopes,
     bearer_methods_supported: ["header"],
@@ -42454,25 +42451,88 @@ function buildProtectedResourceMetadata(req, cfg) {
   };
 }
 function buildAuthServerMetadata(req, cfg) {
-  const tenant = cfg.entraTenantId || "common";
-  const authority = `https://login.microsoftonline.com/${tenant}`;
+  const baseUrl = getExternalBaseUrl(req);
+  const authority = "https://login.microsoftonline.com/common";
   return {
-    issuer: `${authority}/v2.0`,
-    authorization_endpoint: `${authority}/oauth2/v2.0/authorize`,
-    token_endpoint: `${authority}/oauth2/v2.0/token`,
+    issuer: baseUrl,
+    authorization_endpoint: `${baseUrl}/oauth/authorize`,
+    token_endpoint: `${baseUrl}/oauth/token`,
     jwks_uri: `${authority}/discovery/v2.0/keys`,
     response_types_supported: ["code"],
+    response_modes_supported: ["query"],
     grant_types_supported: ["authorization_code", "refresh_token"],
-    code_challenge_methods_supported: ["S256"],
-    token_endpoint_auth_methods_supported: ["none", "client_secret_post", "client_secret_basic"],
+    code_challenge_methods_supported: ["S256", "plain"],
+    token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic", "none"],
     scopes_supported: [
-      `${AZURE_DEVOPS_RESOURCE_ID}/user_impersonation`,
-      "openid",
-      "profile",
+      "499b84ac-1321-427f-aa17-267ca6975798/.default",
       "offline_access"
-    ],
-    ...cfg.entraClientId ? { client_id_hint: cfg.entraClientId } : {}
+    ]
   };
+}
+function normalizeEntraScope(rawScope) {
+  const defaultScope = "499b84ac-1321-427f-aa17-267ca6975798/.default offline_access";
+  if (!rawScope || !rawScope.trim())
+    return defaultScope;
+  if (!rawScope.includes("499b84ac-1321-427f-aa17-267ca6975798")) {
+    return defaultScope;
+  }
+  return rawScope;
+}
+function handleOAuthAuthorize(req, res, searchParams) {
+  const target = new URL("https://login.microsoftonline.com/common/oauth2/v2.0/authorize");
+  for (const [k, v] of searchParams.entries()) {
+    if (k.toLowerCase() === "resource")
+      continue;
+    target.searchParams.set(k, v);
+  }
+  target.searchParams.set("scope", normalizeEntraScope(searchParams.get("scope") || void 0));
+  console.error(`[OAUTH] Redirecting /oauth/authorize -> Microsoft (client_id=${target.searchParams.get("client_id")}, redirect_uri=${target.searchParams.get("redirect_uri")}, scope=${target.searchParams.get("scope")})`);
+  res.writeHead(302, { Location: target.toString() });
+  res.end();
+}
+async function handleOAuthToken(req, res) {
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  const rawBody = Buffer.concat(chunks).toString("utf8");
+  const form = new URLSearchParams(rawBody);
+  form.delete("resource");
+  if (form.has("scope")) {
+    form.set("scope", normalizeEntraScope(form.get("scope") || void 0));
+  } else {
+    form.set("scope", "499b84ac-1321-427f-aa17-267ca6975798/.default offline_access");
+  }
+  const forwardHeaders = {
+    "Content-Type": "application/x-www-form-urlencoded",
+    Accept: "application/json"
+  };
+  if (typeof req.headers["authorization"] === "string") {
+    forwardHeaders["Authorization"] = req.headers["authorization"];
+  }
+  console.error(`[OAUTH] Proxying POST /oauth/token (grant_type=${form.get("grant_type")}, client_id=${form.get("client_id") || "via-basic-auth"})`);
+  try {
+    const msRes = await axios_default.post(
+      "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      form.toString(),
+      { headers: forwardHeaders, validateStatus: () => true, timeout: 15e3 }
+    );
+    if (msRes.status !== 200) {
+      console.error(`[OAUTH] Microsoft /token returned HTTP ${msRes.status}:`, JSON.stringify(msRes.data));
+    } else {
+      console.error(`[OAUTH] Microsoft /token succeeded (HTTP 200)`);
+    }
+    res.writeHead(msRes.status, {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+      Pragma: "no-cache"
+    });
+    res.end(typeof msRes.data === "string" ? msRes.data : JSON.stringify(msRes.data));
+  } catch (err) {
+    console.error(`[OAUTH] Token proxy error:`, err.message);
+    res.writeHead(502, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "server_error", error_description: err.message }));
+  }
 }
 
 // src/devops.ts
@@ -43043,7 +43103,7 @@ var import_crypto3 = require("crypto");
 var server_card_default = {
   serverInfo: {
     name: "mcp-azure-devops",
-    version: "1.1.0"
+    version: "1.1.1"
   },
   tools: [
     {
@@ -44936,7 +44996,7 @@ function createServer3(ctx) {
   const server = new Server(
     {
       name: "mcp-azure-devops",
-      version: "1.1.1"
+      version: "1.1.2"
     },
     {
       capabilities: {
@@ -45128,13 +45188,23 @@ async function main() {
         return;
       }
       if (req.method === "GET" && pathname.includes("/.well-known/oauth-protected-resource")) {
+        console.error(`[OAUTH] ${clientIp} GET ${pathname} (ua=${req.headers["user-agent"] || ""})`);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify(buildProtectedResourceMetadata(req, authCfg), null, 2));
         return;
       }
       if (req.method === "GET" && (pathname.includes("/.well-known/oauth-authorization-server") || pathname.includes("/.well-known/openid-configuration"))) {
+        console.error(`[OAUTH] ${clientIp} GET ${pathname} (ua=${req.headers["user-agent"] || ""})`);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify(buildAuthServerMetadata(req, authCfg), null, 2));
+        return;
+      }
+      if ((req.method === "GET" || req.method === "HEAD") && pathname.endsWith("/oauth/authorize")) {
+        handleOAuthAuthorize(req, res, requestUrl.searchParams);
+        return;
+      }
+      if (req.method === "POST" && pathname.endsWith("/oauth/token")) {
+        await handleOAuthToken(req, res);
         return;
       }
       const isMcpPath = pathname.endsWith("/mcp") || pathname === "/mcp" || req.method === "POST" && (pathname === "/" || pathname === "");
@@ -45144,15 +45214,20 @@ async function main() {
       if (isMcpPath || isSsePath || isMessagesPath) {
         authResult = await authenticateRequest(req, authCfg);
         if (!authResult.authorized) {
-          const failure2 = recordAuthFailure(clientIp, authResult.reason || "Unauthorized");
-          if (failure2.locked) {
-            res.setHeader("Retry-After", String(failure2.retryAfterSeconds));
-            sendJsonRpcError(res, 429, -32002, `Too Many Requests: IP locked out after >5 failed authentication attempts in 10 minutes. Retry in ${failure2.retryAfterSeconds}s.`);
-            req.socket?.destroy();
-            return;
+          const hasAuthHeader = Boolean(req.headers["authorization"]);
+          if (hasAuthHeader) {
+            const failure2 = recordAuthFailure(clientIp, authResult.reason || "Unauthorized");
+            if (failure2.locked) {
+              res.setHeader("Retry-After", String(failure2.retryAfterSeconds));
+              sendJsonRpcError(res, 429, -32002, `Too Many Requests: IP locked out after >5 failed authentication attempts in 10 minutes. Retry in ${failure2.retryAfterSeconds}s.`);
+              req.socket?.destroy();
+              return;
+            }
+          } else {
+            console.error(`[OAUTH] Discovery probe on ${req.method} ${pathname} from ${clientIp} -> 401 WWW-Authenticate`);
           }
           const resourceMetaUrl = `${getExternalBaseUrl(req)}/.well-known/oauth-protected-resource`;
-          res.setHeader("WWW-Authenticate", `Bearer resource_metadata="${resourceMetaUrl}"`);
+          res.setHeader("WWW-Authenticate", `Bearer resource_metadata="${resourceMetaUrl}", scope="499b84ac-1321-427f-aa17-267ca6975798/.default offline_access"`);
           sendJsonRpcError(res, 401, -32001, "Unauthorized: valid Microsoft Entra ID token or Bearer token required");
           return;
         }

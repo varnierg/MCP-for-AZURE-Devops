@@ -20,6 +20,8 @@ import {
   getExternalBaseUrl,
   buildProtectedResourceMetadata,
   buildAuthServerMetadata,
+  handleOAuthAuthorize,
+  handleOAuthToken,
 } from './auth';
 import { DevOpsClient } from './devops';
 import { checkAndUpdateDatabase, searchLocalDatabase, fetchSingleApiInfoOnline } from './docs/updater';
@@ -910,7 +912,7 @@ function createServer(ctx?: RequestContext): Server {
   const server = new Server(
     {
       name: 'mcp-azure-devops',
-      version: '1.1.1',
+      version: '1.1.2',
     },
     {
       capabilities: {
@@ -1162,13 +1164,25 @@ async function main() {
 
       // Serve MCP OAuth 2.1 Protected Resource Metadata (RFC 9728) & Authorization Server Metadata (RFC 8414)
       if (req.method === 'GET' && pathname.includes('/.well-known/oauth-protected-resource')) {
+        console.error(`[OAUTH] ${clientIp} GET ${pathname} (ua=${req.headers['user-agent'] || ''})`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(buildProtectedResourceMetadata(req, authCfg), null, 2));
         return;
       }
       if (req.method === 'GET' && (pathname.includes('/.well-known/oauth-authorization-server') || pathname.includes('/.well-known/openid-configuration'))) {
+        console.error(`[OAUTH] ${clientIp} GET ${pathname} (ua=${req.headers['user-agent'] || ''})`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(buildAuthServerMetadata(req, authCfg), null, 2));
+        return;
+      }
+
+      // OAuth 2.0 Authorize & Token proxy endpoints (strip RFC 8707 `resource` parameter that breaks Microsoft Entra v2.0)
+      if ((req.method === 'GET' || req.method === 'HEAD') && pathname.endsWith('/oauth/authorize')) {
+        handleOAuthAuthorize(req, res, requestUrl.searchParams);
+        return;
+      }
+      if (req.method === 'POST' && pathname.endsWith('/oauth/token')) {
+        await handleOAuthToken(req, res);
         return;
       }
 
@@ -1183,15 +1197,22 @@ async function main() {
       if (isMcpPath || isSsePath || isMessagesPath) {
         authResult = await authenticateRequest(req, authCfg);
         if (!authResult.authorized) {
-          const failure = recordAuthFailure(clientIp, authResult.reason || 'Unauthorized');
-          if (failure.locked) {
-            res.setHeader('Retry-After', String(failure.retryAfterSeconds));
-            sendJsonRpcError(res, 429, -32002, `Too Many Requests: IP locked out after >5 failed authentication attempts in 10 minutes. Retry in ${failure.retryAfterSeconds}s.`);
-            req.socket?.destroy();
-            return;
+          const hasAuthHeader = Boolean(req.headers['authorization']);
+          // Only count requests that actually supplied an invalid Authorization header toward the 5-attempt brute-force lockout.
+          // Unauthenticated requests without Authorization header are normal RFC 9728 OAuth discovery probes.
+          if (hasAuthHeader) {
+            const failure = recordAuthFailure(clientIp, authResult.reason || 'Unauthorized');
+            if (failure.locked) {
+              res.setHeader('Retry-After', String(failure.retryAfterSeconds));
+              sendJsonRpcError(res, 429, -32002, `Too Many Requests: IP locked out after >5 failed authentication attempts in 10 minutes. Retry in ${failure.retryAfterSeconds}s.`);
+              req.socket?.destroy();
+              return;
+            }
+          } else {
+            console.error(`[OAUTH] Discovery probe on ${req.method} ${pathname} from ${clientIp} -> 401 WWW-Authenticate`);
           }
           const resourceMetaUrl = `${getExternalBaseUrl(req)}/.well-known/oauth-protected-resource`;
-          res.setHeader('WWW-Authenticate', `Bearer resource_metadata="${resourceMetaUrl}"`);
+          res.setHeader('WWW-Authenticate', `Bearer resource_metadata="${resourceMetaUrl}", scope="499b84ac-1321-427f-aa17-267ca6975798/.default offline_access"`);
           sendJsonRpcError(res, 401, -32001, 'Unauthorized: valid Microsoft Entra ID token or Bearer token required');
           return;
         }

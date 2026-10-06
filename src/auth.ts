@@ -326,17 +326,14 @@ export function getExternalBaseUrl(req: http.IncomingMessage): string {
 /** RFC 9728 OAuth 2.0 Protected Resource Metadata for MCP OAuth discovery */
 export function buildProtectedResourceMetadata(req: http.IncomingMessage, cfg: AuthConfig): Record<string, unknown> {
   const baseUrl = getExternalBaseUrl(req);
-  const tenant = cfg.entraTenantId || 'common';
   const scopes = [
-    `${AZURE_DEVOPS_RESOURCE_ID}/user_impersonation`,
-    'openid',
-    'profile',
+    '499b84ac-1321-427f-aa17-267ca6975798/.default',
     'offline_access',
   ];
   return {
     resource: `${baseUrl}/mcp`,
     authorization_servers: [
-      `https://login.microsoftonline.com/${tenant}/v2.0`,
+      baseUrl,
     ],
     scopes_supported: scopes,
     bearer_methods_supported: ['header'],
@@ -345,25 +342,106 @@ export function buildProtectedResourceMetadata(req: http.IncomingMessage, cfg: A
   };
 }
 
-/** RFC 8414 OAuth 2.0 Authorization Server Metadata pointing MCP clients to Microsoft Entra ID */
+/** RFC 8414 OAuth 2.0 Authorization Server Metadata pointing MCP clients to our RFC-8707-normalizing Entra proxy endpoints */
 export function buildAuthServerMetadata(req: http.IncomingMessage, cfg: AuthConfig): Record<string, unknown> {
-  const tenant = cfg.entraTenantId || 'common';
-  const authority = `https://login.microsoftonline.com/${tenant}`;
+  const baseUrl = getExternalBaseUrl(req);
+  const authority = 'https://login.microsoftonline.com/common';
   return {
-    issuer: `${authority}/v2.0`,
-    authorization_endpoint: `${authority}/oauth2/v2.0/authorize`,
-    token_endpoint: `${authority}/oauth2/v2.0/token`,
+    issuer: baseUrl,
+    authorization_endpoint: `${baseUrl}/oauth/authorize`,
+    token_endpoint: `${baseUrl}/oauth/token`,
     jwks_uri: `${authority}/discovery/v2.0/keys`,
     response_types_supported: ['code'],
+    response_modes_supported: ['query'],
     grant_types_supported: ['authorization_code', 'refresh_token'],
-    code_challenge_methods_supported: ['S256'],
-    token_endpoint_auth_methods_supported: ['none', 'client_secret_post', 'client_secret_basic'],
+    code_challenge_methods_supported: ['S256', 'plain'],
+    token_endpoint_auth_methods_supported: ['client_secret_post', 'client_secret_basic', 'none'],
     scopes_supported: [
-      `${AZURE_DEVOPS_RESOURCE_ID}/user_impersonation`,
-      'openid',
-      'profile',
+      '499b84ac-1321-427f-aa17-267ca6975798/.default',
       'offline_access',
     ],
-    ...(cfg.entraClientId ? { client_id_hint: cfg.entraClientId } : {}),
   };
 }
+
+/**
+ * Normalizes OAuth scopes requested by MCP clients (e.g. Gemini) so Microsoft Entra ID v2.0 accepts them.
+ * Microsoft v2.0 rejects empty scopes or mixing a resource scope with openid/profile unless formatted properly.
+ */
+function normalizeEntraScope(rawScope: string | undefined): string {
+  const defaultScope = '499b84ac-1321-427f-aa17-267ca6975798/.default offline_access';
+  if (!rawScope || !rawScope.trim()) return defaultScope;
+  // Ensure the Azure DevOps resource scope is always present
+  if (!rawScope.includes('499b84ac-1321-427f-aa17-267ca6975798')) {
+    return defaultScope;
+  }
+  return rawScope;
+}
+
+/**
+ * GET /oauth/authorize — Strips RFC 8707 `resource` parameter (which triggers AADSTS9010010 on Microsoft Entra v2.0),
+ * normalizes scopes, and 302 redirects the user's browser to Microsoft's login page.
+ */
+export function handleOAuthAuthorize(req: http.IncomingMessage, res: http.ServerResponse, searchParams: URLSearchParams): void {
+  const target = new URL('https://login.microsoftonline.com/common/oauth2/v2.0/authorize');
+  for (const [k, v] of searchParams.entries()) {
+    if (k.toLowerCase() === 'resource') continue; // Strip RFC 8707 resource indicator
+    target.searchParams.set(k, v);
+  }
+  target.searchParams.set('scope', normalizeEntraScope(searchParams.get('scope') || undefined));
+  console.error(`[OAUTH] Redirecting /oauth/authorize -> Microsoft (client_id=${target.searchParams.get('client_id')}, redirect_uri=${target.searchParams.get('redirect_uri')}, scope=${target.searchParams.get('scope')})`);
+  res.writeHead(302, { Location: target.toString() });
+  res.end();
+}
+
+/**
+ * POST /oauth/token — Strips RFC 8707 `resource` parameter from the form-urlencoded body,
+ * forwards the token exchange/refresh request (including Basic Authorization header if present) to Microsoft Entra v2.0,
+ * and returns Microsoft's JSON response to the MCP client.
+ */
+export async function handleOAuthToken(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  const rawBody = Buffer.concat(chunks).toString('utf8');
+  const form = new URLSearchParams(rawBody);
+  form.delete('resource');
+  if (form.has('scope')) {
+    form.set('scope', normalizeEntraScope(form.get('scope') || undefined));
+  } else {
+    form.set('scope', '499b84ac-1321-427f-aa17-267ca6975798/.default offline_access');
+  }
+
+  const forwardHeaders: Record<string, string> = {
+    'Content-Type': 'application/x-www-form-urlencoded',
+    Accept: 'application/json',
+  };
+  if (typeof req.headers['authorization'] === 'string') {
+    forwardHeaders['Authorization'] = req.headers['authorization'];
+  }
+
+  console.error(`[OAUTH] Proxying POST /oauth/token (grant_type=${form.get('grant_type')}, client_id=${form.get('client_id') || 'via-basic-auth'})`);
+  try {
+    const msRes = await axios.post(
+      'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+      form.toString(),
+      { headers: forwardHeaders, validateStatus: () => true, timeout: 15000 }
+    );
+    if (msRes.status !== 200) {
+      console.error(`[OAUTH] Microsoft /token returned HTTP ${msRes.status}:`, JSON.stringify(msRes.data));
+    } else {
+      console.error(`[OAUTH] Microsoft /token succeeded (HTTP 200)`);
+    }
+    res.writeHead(msRes.status, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+      Pragma: 'no-cache',
+    });
+    res.end(typeof msRes.data === 'string' ? msRes.data : JSON.stringify(msRes.data));
+  } catch (err: any) {
+    console.error(`[OAUTH] Token proxy error:`, err.message);
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'server_error', error_description: err.message }));
+  }
+}
+
