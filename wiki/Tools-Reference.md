@@ -28,6 +28,7 @@ Configures and encrypts Azure DevOps credentials (Username & Personal Access Tok
   * `username` (string, **required**): Your username or email.
   * `token` (string, **required**): Your Personal Access Token (PAT).
 * **Output**: A success message indicating that configuration was encrypted and saved.
+* **Remote HTTP mode**: credentials are kept in memory for the current MCP session only and are never written to disk (see [Remote HTTP Mode](Remote-HTTP-Mode)).
 
 ### `connection_test`
 Verifies connection to Azure DevOps for a configured organization.
@@ -257,6 +258,7 @@ Searches for users or groups in the organization by name or email.
 ## Quick Navigation Sidebar
 * [Home](Home)
 * [Configuration & Setup](Configuration-and-Setup)
+* [Remote HTTP Mode](Remote-HTTP-Mode)
 * [Tools Reference](Tools-Reference)
 * [Generic REST Client & API Directory](Generic-REST-Client)
 * [Testing & Sandbox Setup](Testing-and-Sandbox)

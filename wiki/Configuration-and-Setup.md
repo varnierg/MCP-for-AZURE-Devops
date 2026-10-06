@@ -55,60 +55,79 @@ npx -y @smithery/cli install github-y8ge/mcp-azure-devops --client claude
 
 ---
 
-## 💻 4. Interactive Manual Setup
+## 💻 4. Manual Installation
 
-You can configure the server interactively by cloning the repository and running the setup script:
+1. Install **Node.js 18 or newer** (includes npm).
+2. Clone the repository and install the dependencies:
+   ```bash
+   git clone https://github.com/varnierg/MCP-for-AZURE-Devops.git
+   cd MCP-for-AZURE-Devops
+   npm install
+   ```
+3. The compiled server (`dist/index.js`) is already included in the repository. Rebuild it only if you change the TypeScript sources:
+   ```bash
+   npm run build
+   ```
 
-### Windows (Command Prompt / PowerShell)
-Run the pre-configured batch script in the root directory:
-```cmd
-setup.bat
-```
-
-### Any OS (npm)
-Run the setup command via npm:
+### Optional: save credentials with the setup wizard
+Instead of letting the AI agent call `connection_configure`, you can store credentials upfront:
 ```bash
 npm run setup
 ```
 
-The script will prompt you for:
-1. **Azure DevOps URL**: The full URL (e.g., `https://dev.azure.com/your-org`).
-2. **Username / Email**: The email address associated with your Azure DevOps account.
-3. **Personal Access Token (PAT)**: The token you generated in Step 1.
-4. **Default Project (Optional)**: A fallback project name to use when tools are invoked without a project specified.
+The wizard asks for:
+1. **Azure DevOps project or dashboard URL** (e.g. `https://dev.azure.com/your-org/YourProject`). The organization and project are taken from the URL.
+2. **Username / e-mail** of your Azure DevOps account.
+3. **Personal Access Token (PAT)** generated in step 1.
 
-The script will automatically test your connection and PAT validity before encrypting and saving them.
+If the organization is already configured, it offers to reuse the saved credentials. It tests the connection before encrypting and saving them.
 
 ---
 
-## 🤖 4. AI Client Integration (e.g., Claude Desktop)
+## 🤖 5. AI Client Integration (stdio)
 
-To use the server with **Claude Desktop**, add it to your configuration file:
+Add the server to your client's MCP configuration. Example for **Claude Desktop**:
 
-* **File Location**: `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS).
-* **Configuration Snippet**:
+* **File location**: `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS).
+* **Configuration snippet**:
 
 ```json
 {
   "mcpServers": {
     "mcp-azure-devops": {
-      "command": "cmd.exe",
+      "command": "node",
       "args": [
-        "/c",
-        "C:\\Path\\To\\Your\\MCP devops\\start.bat"
+        "C:\\Path\\To\\MCP-for-AZURE-Devops\\dist\\index.js"
       ]
     }
   }
 }
 ```
 
+On macOS/Linux use a path such as `/Users/<you>/MCP-for-AZURE-Devops/dist/index.js`. The same `command` + `args` block works in other stdio clients (Antigravity, Cursor, VS Code, …).
+
 > [!IMPORTANT]
-> Make sure to replace `C:\\Path\\To\\Your\\MCP devops` with the actual absolute path to the directory where you cloned the repository.
+> Replace the path with the absolute path of the folder where you cloned the repository.
+
+> [!WARNING]
+> On **macOS/Linux** the process also opens the HTTP listener on port `8080` by default (on Windows only when a port is set). If the machine is reachable from other hosts, set `MCP_AUTH_TOKEN` in the client's `env` block or firewall the port. See [Remote HTTP Mode](Remote-HTTP-Mode).
+
+Credentials can optionally be passed at startup instead of being stored: arguments `--org`, `--username`, `--pat`, `--project`, or environment variables `AZURE_DEVOPS_ORG`, `AZURE_DEVOPS_USERNAME`, `AZURE_DEVOPS_PAT`, `AZURE_DEVOPS_PROJECT`.
+
+> [!TIP]
+> The PAT field also accepts a **Microsoft Entra ID access token** issued for Azure DevOps. It is sent as a `Bearer` token instead of Basic authentication.
+
+---
+
+## 🌐 6. Remote HTTP Mode
+
+To share one server instance between several clients, or to run it in a container, see **[Remote HTTP Mode](Remote-HTTP-Mode)**.
 
 ---
 ## Quick Navigation Sidebar
 * [Home](Home)
 * [Configuration & Setup](Configuration-and-Setup)
+* [Remote HTTP Mode](Remote-HTTP-Mode)
 * [Tools Reference](Tools-Reference)
 * [Generic REST Client & API Directory](Generic-REST-Client)
 * [Testing & Sandbox Setup](Testing-and-Sandbox)

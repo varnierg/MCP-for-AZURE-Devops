@@ -52,25 +52,23 @@ To make sure all tools (Git, WIT, Pipelines, and Identities) have resources to i
 
 ## 🏃 3. Running Automated Tests
 
-The codebase includes an integrated test suite under [src/test.ts](file:///g:/Il%20mio%20Drive/antigravity/MCP%20devops/src/test.ts) that tests internal helper functions (crypto, config store, URL parser).
+The codebase includes an integrated test suite in [`src/test.ts`](https://github.com/varnierg/MCP-for-AZURE-Devops/blob/main/src/test.ts) that tests internal helper functions (URL parser, crypto, config store, offline API database).
 
 To run these tests:
 ```bash
 npm run test
 ```
 
-### ⚠️ Important Test Suite Requirement
-The test suite in `src/test.ts` is configured by default with a placeholder organization name `my-org`. 
+### ⚠️ Important Test Suite Note
+The tests are self-contained and use placeholder organizations (`my-org`, `anotherorg`) with fake tokens, so **no changes to `src/test.ts` are required** and no network access to Azure DevOps is needed.
 
-Before running `npm run test`, you should:
-1. Open [src/test.ts](file:///g:/Il%20mio%20Drive/antigravity/MCP%20devops/src/test.ts).
-2. Substitute occurrences of `my-org` with your actual Azure DevOps organization name.
-3. Otherwise, the mock URL parser and configuration store tests will fail.
+However, the configuration-store test **writes these dummy entries into your local encrypted credential file** (`.azure-devops-config.enc` in the project folder). If you already saved real credentials there, back the file up before running the tests and restore it afterwards (or simply re-run `npm run setup`).
 
 ---
 ## Quick Navigation Sidebar
 * [Home](Home)
 * [Configuration & Setup](Configuration-and-Setup)
+* [Remote HTTP Mode](Remote-HTTP-Mode)
 * [Tools Reference](Tools-Reference)
 * [Generic REST Client & API Directory](Generic-REST-Client)
 * [Testing & Sandbox Setup](Testing-and-Sandbox)

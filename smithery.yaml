@@ -21,7 +21,7 @@ configSchema:
   properties:
     organization:
       type: string
-      description: Azure DevOps Organization name (e.g. "myorg" or "jitime")
+      description: Azure DevOps Organization name (e.g. "my-org")
     username:
       type: string
       description: Your Azure DevOps username or email

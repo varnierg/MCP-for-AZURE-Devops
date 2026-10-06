@@ -19,17 +19,21 @@ Explore the detailed sections of the documentation:
 ### 1. ⚙️ [Configuration & Setup](Configuration-and-Setup)
 * Learn how to generate a Personal Access Token (PAT) with the correct scopes.
 * Understand the credential security architecture (AES-256-GCM local encryption).
-* Run the interactive setup wizard and integrate the server with AI clients like Claude Desktop.
+* Install via Smithery or manually, and integrate the server with AI clients like Claude Desktop or Antigravity.
 
-### 2. 🛠️ [Tools Reference](Tools-Reference)
+### 2. 🌐 [Remote HTTP Mode](Remote-HTTP-Mode)
+* Run the server over HTTP (Streamable HTTP at `/mcp`, legacy SSE at `/sse`), locally or in Docker.
+* Protect the endpoint with a bearer token or Microsoft Entra ID, and pass per-session Azure DevOps credentials.
+
+### 3. 🛠️ [Tools Reference](Tools-Reference)
 * Complete specifications for all 23 exposed tools.
 * Parameter lists, required fields, and examples for Work Item Tracking (WIT), Git Integration, Pipeline Management, and Identity Search.
 
-### 3. 🌐 [Generic REST Client & API Directory](Generic-REST-Client)
+### 4. 🔌 [Generic REST Client & API Directory](Generic-REST-Client)
 * How to use the powerful `api_call` tool.
 * Explaining the offline API directory (`api_docs` and `api_info`) which helps AI models discover and execute arbitrary Azure DevOps REST API requests.
 
-### 4. 🧪 [Testing & Sandbox Setup](Testing-and-Sandbox)
+### 5. 🧪 [Testing & Sandbox Setup](Testing-and-Sandbox)
 * How to run the automated unit tests.
 * Creating a free sandbox Azure DevOps organization and populating test data to verify the MCP tools safely.
 
@@ -38,6 +42,7 @@ Explore the detailed sections of the documentation:
 ## Quick Navigation Sidebar
 * [Home](Home)
 * [Configuration & Setup](Configuration-and-Setup)
+* [Remote HTTP Mode](Remote-HTTP-Mode)
 * [Tools Reference](Tools-Reference)
 * [Generic REST Client & API Directory](Generic-REST-Client)
 * [Testing & Sandbox Setup](Testing-and-Sandbox)

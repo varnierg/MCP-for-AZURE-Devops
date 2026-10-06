@@ -99,6 +99,7 @@ To permanently delete work item with ID `999`:
 ## Quick Navigation Sidebar
 * [Home](Home)
 * [Configuration & Setup](Configuration-and-Setup)
+* [Remote HTTP Mode](Remote-HTTP-Mode)
 * [Tools Reference](Tools-Reference)
 * [Generic REST Client & API Directory](Generic-REST-Client)
 * [Testing & Sandbox Setup](Testing-and-Sandbox)

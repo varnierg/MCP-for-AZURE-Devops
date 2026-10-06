@@ -29,6 +29,7 @@ It provides a rich suite of tools to manage Work Items (Bugs, User Stories, Task
 - **Multi-Organization and Multi-Project Support**: Seamlessly configure and interact with multiple Azure DevOps projects and organizations.
 - **Offline API Database**: Includes a local cache (`api-directory.json`) of Microsoft Azure DevOps API specs to allow fast, offline endpoint searches.
 - **Flexible REST Client**: Includes a generic tool (`api_call`) capable of executing any HTTP request (GET, POST, PATCH, etc.) against the Azure DevOps REST APIs.
+- **Remote HTTP Mode**: Optionally serves the same tools over Streamable HTTP (`/mcp`) and legacy SSE (`/sse`), with bearer-token or Microsoft Entra ID authentication and per-session credentials. See [Remote Mode (HTTP)](#remote-mode-http).
 
 ---
 
@@ -94,17 +95,23 @@ npx -y @smithery/cli install github-y8ge/mcp-azure-devops --client claude
 
 ### Manual Installation
 
-1. Clone this repository to your local machine.
-2. Open your terminal in the project directory and install the required dependencies:
+1. Install **Node.js 18 or newer** (includes npm).
+2. Clone the repository and install the dependencies:
    ```bash
+   git clone https://github.com/varnierg/MCP-for-AZURE-Devops.git
+   cd MCP-for-AZURE-Devops
    npm install
+   ```
+3. The compiled server (`dist/index.js`) is already included. Rebuild it only if you change the TypeScript sources:
+   ```bash
+   npm run build
    ```
 
 ---
 
 ### Configuration
 
-The server requires a project or dashboard URL, your email/username, and an Azure DevOps **Personal Access Token (PAT)**.
+The server needs your Azure DevOps organization (or a project/dashboard URL), your e-mail/username and an Azure DevOps **Personal Access Token (PAT)**.
 
 #### Generate a PAT in Azure DevOps
 1. Open your Azure DevOps portal.
@@ -117,78 +124,106 @@ The server requires a project or dashboard URL, your email/username, and an Azur
    - **Graph**: `Read` (required for searching identities/users)
 5. Copy the generated token (it won't be shown again).
 
-#### Interactive Local Setup
-Run the setup wizard:
-- On Windows:
-  ```cmd
-  setup.bat
-  ```
-- Or via npm:
-  ```bash
-  npm run setup
-  ```
-Follow the prompts to configure and save your credentials safely.
+#### How to provide the credentials (choose one)
+- **At runtime (default)**: the AI agent calls `connection_configure` with URL, username and PAT the first time it connects to an organization. Credentials are encrypted and saved locally.
+- **Setup wizard**: run `npm run setup` and enter the project URL, username and PAT. The wizard tests the connection before saving.
+- **Startup arguments / environment variables**: `--org`, `--username`, `--pat`, `--project`, or `AZURE_DEVOPS_ORG`, `AZURE_DEVOPS_USERNAME`, `AZURE_DEVOPS_PAT`, `AZURE_DEVOPS_PROJECT`.
+
+> [!TIP]
+> The PAT field also accepts a **Microsoft Entra ID access token** issued for Azure DevOps. It is sent as a `Bearer` token.
 
 ---
 
 ### Running & Usage
 
-#### Build the TypeScript code
-Compile the TypeScript source code to JavaScript before running:
-```bash
-npm run build
-```
-
-#### Integrate with AI Clients (e.g. Claude Desktop)
-Add the server to your Claude Desktop configuration file `claude_desktop_config.json` (usually located at `%APPDATA%\Claude\claude_desktop_config.json`):
+#### Integrate with AI Clients (stdio)
+Add the server to your client's MCP configuration. Example for **Claude Desktop** (`%APPDATA%\Claude\claude_desktop_config.json` on Windows, `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
 
 ```json
 {
   "mcpServers": {
     "mcp-azure-devops": {
-      "command": "cmd.exe",
+      "command": "node",
       "args": [
-        "/c",
-        "C:\\Path\\To\\Your\\MCP devops\\start.bat"
+        "C:\\Path\\To\\MCP-for-AZURE-Devops\\dist\\index.js"
       ]
     }
   }
 }
 ```
 
-*Note: Replace `C:\\Path\\To\\Your\\MCP devops` with the actual absolute path to the project directory on your machine.*
+*Note: replace the path with the absolute path of the cloned repository (on macOS/Linux e.g. `/Users/<you>/MCP-for-AZURE-Devops/dist/index.js`). The same `command` + `args` block works in other stdio clients (Antigravity, Cursor, VS Code, …).*
+
+> [!WARNING]
+> On **macOS/Linux** the process also opens the HTTP listener on port `8080` by default (on Windows only when a port is set). If the machine is reachable from other hosts, set `MCP_AUTH_TOKEN` in the client's `env` block or firewall the port.
 
 ---
 
 ### Remote Mode (HTTP)
-Starting the server with `--port <n>` (or `PORT` / `MCP_PORT`; Linux containers default to `8080`) exposes:
-- **Streamable HTTP** (current MCP spec) at `/mcp`
-- **Legacy SSE** at `/sse` + `/messages` (for older clients)
-- Server card at `/.well-known/mcp/server-card.json`
+
+The server can also expose its tools over HTTP, so that one instance can be shared by several clients or run in a container. Full guide: [Remote HTTP Mode (wiki)](https://github.com/varnierg/MCP-for-AZURE-Devops/wiki/Remote-HTTP-Mode).
+
+**Start**: `node dist/index.js --port 8080` (or `PORT` / `MCP_PORT`; Linux/macOS and containers default to `8080`). The stdio transport stays active too.
+
+| Endpoint | Purpose |
+|---|---|
+| `/mcp` | **Streamable HTTP** (current MCP specification) |
+| `/sse` + `/messages` | **Legacy SSE** (older clients) |
+| `/.well-known/mcp/server-card.json` | Server card |
+| `/.well-known/oauth-protected-resource` | OAuth metadata for Microsoft Entra ID sign-in |
+
+**Authentication of the MCP endpoint** (combinable):
 
 | Variable / Flag | Description |
 |---|---|
-| `MCP_AUTH_TOKEN` / `--auth-token` | When set, MCP endpoints require `Authorization: Bearer <token>`. **Required** if you expose server-wide credentials on a public URL. |
-| `AZURE_DEVOPS_ORG`, `AZURE_DEVOPS_USERNAME`, `AZURE_DEVOPS_PAT` | Optional server-wide credentials (single-user deployment). |
+| `MCP_AUTH_TOKEN` / `--auth-token` | Clients must send `Authorization: Bearer <token>`. |
+| `ENTRA_TENANT_ID` / `--tenant-id` | Validate Microsoft Entra ID tokens (tenant ID, comma-separated list, `common` or `organizations`). |
+| `ENTRA_CLIENT_ID` / `--client-id` | Also accept tokens issued for your Entra app registration. |
+| `ENTRA_ALLOWED_USERS` / `--allowed-users` | Optional comma-separated allow-list of user e-mails/UPNs. |
 
-Per-session credentials (multi-user): each client can send `X-Azure-DevOps-Org`, `X-Azure-DevOps-PAT`, `X-Azure-DevOps-Username`, `X-Azure-DevOps-Project` headers (or the query params `organization`, `pat`, ... or `config=<base64 JSON>`, Smithery format). In remote mode `connection_configure` keeps credentials **in memory for that session only**, never on disk. Sessions idle for more than 30 minutes are dropped.
+Without any of them the server runs in **open mode** (only for localhost/testing). More than 5 failed authentication attempts from an IP within 10 minutes lock that IP out for 30 minutes. An Entra ID token issued for Azure DevOps is also used to call Azure DevOps on behalf of the user, so no PAT is needed.
 
+**Azure DevOps credentials**:
+- **Per session (multi-user)**: headers `X-Azure-DevOps-Org`, `X-Azure-DevOps-PAT`, `X-Azure-DevOps-Username`, `X-Azure-DevOps-Project` (recommended), or query parameters `organization`, `pat`, … / `config=<base64 JSON>` (Smithery format). `connection_configure` keeps credentials **in memory for that session only**, never on disk. Sessions idle for more than 30 minutes are dropped.
+- **Server-wide (single user)**: `AZURE_DEVOPS_ORG`, `AZURE_DEVOPS_PAT`, `AZURE_DEVOPS_USERNAME`, `AZURE_DEVOPS_PROJECT`. In this case authentication is **mandatory**.
+
+**Docker (local)**:
 ```bash
 docker build -t mcp-azure-devops .
-docker run -p 8080:8080 -e MCP_AUTH_TOKEN=a-long-secret mcp-azure-devops
+docker run -p 8080:8080 -e MCP_AUTH_TOKEN=a-long-random-secret mcp-azure-devops
 # Client endpoint: http://localhost:8080/mcp
 ```
+
+**Client configuration** (clients with remote support; the key may be `url` or `serverUrl` depending on the client):
+```json
+{
+  "mcpServers": {
+    "azure-devops": {
+      "url": "http://localhost:8080/mcp",
+      "headers": {
+        "Authorization": "Bearer a-long-random-secret",
+        "X-Azure-DevOps-Org": "my-org",
+        "X-Azure-DevOps-PAT": "<your-pat>"
+      }
+    }
+  }
+}
+```
+For stdio-only clients use the bridge: `npx -y mcp-remote http://localhost:8080/mcp --header "Authorization: Bearer a-long-random-secret"`.
+
+> [!CAUTION]
+> Never expose the HTTP endpoint on a public network without authentication and HTTPS (reverse proxy).
 
 ---
 
 ### Verification
-Run the integrated test suite to verify internal helper functions (crypto, config store, URL parser):
+Run the integrated test suite to verify internal helper functions (URL parser, crypto, config store, offline API database):
 ```bash
 npm run test
 ```
 
 > [!IMPORTANT]
-> The test suite in `src/test.ts` uses the placeholder organization `my-org`. Before running tests, you should substitute occurrences of `my-org` in `src/test.ts` with your actual Azure DevOps organization name, or the mock URL parser and configuration store tests will fail.
+> The tests are self-contained (placeholder organizations `my-org` / `anotherorg`, fake tokens): no changes to `src/test.ts` are required. The config-store test writes these dummy entries into your local `.azure-devops-config.enc`, so back it up first if it already contains real credentials.
 
 #### Setting up a Test Environment / Creating Test Data
 To test the Azure DevOps MCP tools (Work Items, Git, Pipelines, and Identities), you can set up a dedicated sandbox environment:
@@ -225,6 +260,7 @@ Il server fornisce una ricca suite di strumenti per gestire Work Item (Bug, User
 - **Supporto Multi-Organization e Multi-Project**: È possibile configurare e gestire molteplici progetti e organizzazioni DevOps.
 - **Cache API Offline**: Include un database locale (`api-directory.json`) contenente la documentazione delle API Microsoft Azure DevOps per permettere ricerche rapide offline degli endpoint.
 - **Client REST flessibile**: Oltre ai comandi specifici, espone uno strumento generico (`api_call`) in grado di eseguire qualsiasi richiesta HTTP (GET, POST, PATCH, ecc.) verso le API REST di Azure DevOps.
+- **Modalità Remota HTTP**: Opzionalmente espone gli stessi strumenti via Streamable HTTP (`/mcp`) e SSE legacy (`/sse`), con autenticazione tramite bearer token o Microsoft Entra ID e credenziali per singola sessione. Vedi [Modalità Remota (HTTP)](#modalità-remota-http).
 
 ---
 
@@ -290,17 +326,23 @@ npx -y @smithery/cli install github-y8ge/mcp-azure-devops --client claude
 
 ### Installazione Manuale
 
-1. Clona questo repository sul tuo computer locale.
-2. Apri il terminale nella cartella del progetto ed esegui il comando seguente per installare le dipendenze richieste:
+1. Installa **Node.js 18 o superiore** (include npm).
+2. Clona il repository e installa le dipendenze:
    ```bash
+   git clone https://github.com/varnierg/MCP-for-AZURE-Devops.git
+   cd MCP-for-AZURE-Devops
    npm install
+   ```
+3. Il server compilato (`dist/index.js`) è già incluso. Ricompila solo se modifichi i sorgenti TypeScript:
+   ```bash
+   npm run build
    ```
 
 ---
 
 ### Configurazione
 
-Il server necessita di un URL di progetto (o dashboard), dell'email/username utente e di un **Personal Access Token (PAT)** di Azure DevOps.
+Il server necessita dell'organizzazione Azure DevOps (o di un URL di progetto/dashboard), dell'email/username utente e di un **Personal Access Token (PAT)** di Azure DevOps.
 
 #### Generare un PAT in Azure DevOps
 1. Accedi al tuo portale Azure DevOps.
@@ -313,78 +355,106 @@ Il server necessita di un URL di progetto (o dashboard), dell'email/username ute
    - **Graph**: `Read` (necessario per cercare identità e utenti)
 5. Copia il token generato (non sarà più visibile successivamente).
 
-#### Configurazione guidata locale
-Puoi avviare lo script di setup interattivo eseguendo:
-- Su Windows:
-  ```cmd
-  setup.bat
-  ```
-- Oppure tramite npm:
-  ```bash
-  npm run setup
-  ```
-Lo script ti guiderà nell'inserimento dell'URL, dello username e del PAT, verificando la connessione prima di salvare in sicurezza il file cifrato.
+#### Come fornire le credenziali (scegline una)
+- **A runtime (predefinito)**: l'assistente IA chiama `connection_configure` con URL, username e PAT alla prima connessione a un'organizzazione. Le credenziali vengono cifrate e salvate localmente.
+- **Configurazione guidata**: esegui `npm run setup` e inserisci URL del progetto, username e PAT. Lo script verifica la connessione prima di salvare.
+- **Argomenti di avvio / variabili d'ambiente**: `--org`, `--username`, `--pat`, `--project`, oppure `AZURE_DEVOPS_ORG`, `AZURE_DEVOPS_USERNAME`, `AZURE_DEVOPS_PAT`, `AZURE_DEVOPS_PROJECT`.
+
+> [!TIP]
+> Il campo PAT accetta anche un **access token Microsoft Entra ID** emesso per Azure DevOps, che viene inviato come token `Bearer`.
 
 ---
 
 ### Avvio ed Utilizzo
 
-#### Compilazione del codice TypeScript
-Prima di avviare il server, è necessario compilare i sorgenti in codice JavaScript:
-```bash
-npm run build
-```
-
-#### Configurazione nei client AI (es. Claude Desktop)
-Per utilizzare questo server all'interno di **Claude Desktop**, modifica il file di configurazione `claude_desktop_config.json` (solitamente situato in `%APPDATA%\Claude\claude_desktop_config.json`) aggiungendo il server MCP appena configurato:
+#### Configurazione nei client AI (stdio)
+Aggiungi il server alla configurazione MCP del tuo client. Esempio per **Claude Desktop** (`%APPDATA%\Claude\claude_desktop_config.json` su Windows, `~/Library/Application Support/Claude/claude_desktop_config.json` su macOS):
 
 ```json
 {
   "mcpServers": {
     "mcp-azure-devops": {
-      "command": "cmd.exe",
+      "command": "node",
       "args": [
-        "/c",
-        "C:\\Percorso\\Della\\Cartella\\MCP devops\\start.bat"
+        "C:\\Percorso\\Della\\Cartella\\MCP-for-AZURE-Devops\\dist\\index.js"
       ]
     }
   }
 }
 ```
 
-*Nota: Sostituisci `C:\\Percorso\\Della\\Cartella\\MCP devops` con il percorso assoluto della cartella del progetto sul tuo computer.*
+*Nota: sostituisci il percorso con quello assoluto del repository clonato (su macOS/Linux ad es. `/Users/<utente>/MCP-for-AZURE-Devops/dist/index.js`). Lo stesso blocco `command` + `args` funziona anche negli altri client stdio (Antigravity, Cursor, VS Code, …).*
+
+> [!WARNING]
+> Su **macOS/Linux** il processo apre per impostazione predefinita anche il listener HTTP sulla porta `8080` (su Windows solo se la porta è impostata). Se la macchina è raggiungibile da altri host, imposta `MCP_AUTH_TOKEN` nel blocco `env` del client oppure blocca la porta con il firewall.
 
 ---
 
 ### Modalità Remota (HTTP)
-Avviando il server con `--port <n>` (o le variabili `PORT` / `MCP_PORT`; nei container Linux la porta predefinita è `8080`) vengono esposti:
-- **Streamable HTTP** (specifica MCP attuale) su `/mcp`
-- **SSE legacy** su `/sse` + `/messages` (per client meno recenti)
-- Server card su `/.well-known/mcp/server-card.json`
+
+Il server può esporre gli stessi strumenti anche via HTTP, così un'unica istanza può essere condivisa da più client o eseguita in un container. Guida completa (in inglese): [Remote HTTP Mode (wiki)](https://github.com/varnierg/MCP-for-AZURE-Devops/wiki/Remote-HTTP-Mode).
+
+**Avvio**: `node dist/index.js --port 8080` (oppure `PORT` / `MCP_PORT`; su Linux/macOS e nei container la porta predefinita è `8080`). Il trasporto stdio resta comunque attivo.
+
+| Endpoint | Scopo |
+|---|---|
+| `/mcp` | **Streamable HTTP** (specifica MCP attuale) |
+| `/sse` + `/messages` | **SSE legacy** (client meno recenti) |
+| `/.well-known/mcp/server-card.json` | Server card |
+| `/.well-known/oauth-protected-resource` | Metadati OAuth per l'accesso con Microsoft Entra ID |
+
+**Autenticazione dell'endpoint MCP** (combinabili):
 
 | Variabile / Flag | Descrizione |
 |---|---|
-| `MCP_AUTH_TOKEN` / `--auth-token` | Se impostato, gli endpoint MCP richiedono `Authorization: Bearer <token>`. **Obbligatorio** se esponi credenziali globali su un URL pubblico. |
-| `AZURE_DEVOPS_ORG`, `AZURE_DEVOPS_USERNAME`, `AZURE_DEVOPS_PAT` | Credenziali globali opzionali (deployment a utente singolo). |
+| `MCP_AUTH_TOKEN` / `--auth-token` | I client devono inviare `Authorization: Bearer <token>`. |
+| `ENTRA_TENANT_ID` / `--tenant-id` | Valida i token Microsoft Entra ID (ID tenant, elenco separato da virgole, `common` o `organizations`). |
+| `ENTRA_CLIENT_ID` / `--client-id` | Accetta anche i token emessi per la tua app registration Entra. |
+| `ENTRA_ALLOWED_USERS` / `--allowed-users` | Elenco opzionale (separato da virgole) di email/UPN autorizzati. |
 
-Credenziali per singola sessione (multi-utente): ogni client può inviare gli header `X-Azure-DevOps-Org`, `X-Azure-DevOps-PAT`, `X-Azure-DevOps-Username`, `X-Azure-DevOps-Project` (in alternativa i parametri query `organization`, `pat`, ... o `config=<JSON base64>`, formato Smithery). In modalità remota `connection_configure` salva le credenziali **solo in memoria per quella sessione**, mai su disco. Le sessioni inattive da più di 30 minuti vengono eliminate.
+Senza nessuna di queste opzioni il server funziona in **modalità aperta** (solo per localhost/test). Più di 5 tentativi di autenticazione falliti da uno stesso IP in 10 minuti bloccano quell'IP per 30 minuti. Un token Entra ID emesso per Azure DevOps viene usato anche per chiamare Azure DevOps per conto dell'utente, senza bisogno di PAT.
 
+**Credenziali Azure DevOps**:
+- **Per sessione (multi-utente)**: header `X-Azure-DevOps-Org`, `X-Azure-DevOps-PAT`, `X-Azure-DevOps-Username`, `X-Azure-DevOps-Project` (consigliati), oppure parametri query `organization`, `pat`, … / `config=<JSON base64>` (formato Smithery). `connection_configure` mantiene le credenziali **solo in memoria per quella sessione**, mai su disco. Le sessioni inattive da più di 30 minuti vengono eliminate.
+- **Globali (utente singolo)**: `AZURE_DEVOPS_ORG`, `AZURE_DEVOPS_PAT`, `AZURE_DEVOPS_USERNAME`, `AZURE_DEVOPS_PROJECT`. In questo caso l'autenticazione è **obbligatoria**.
+
+**Docker (locale)**:
 ```bash
 docker build -t mcp-azure-devops .
-docker run -p 8080:8080 -e MCP_AUTH_TOKEN=un-segreto-lungo mcp-azure-devops
+docker run -p 8080:8080 -e MCP_AUTH_TOKEN=un-segreto-lungo-e-casuale mcp-azure-devops
 # Endpoint client: http://localhost:8080/mcp
 ```
+
+**Configurazione del client** (client con supporto remoto; la chiave può essere `url` o `serverUrl` a seconda del client):
+```json
+{
+  "mcpServers": {
+    "azure-devops": {
+      "url": "http://localhost:8080/mcp",
+      "headers": {
+        "Authorization": "Bearer un-segreto-lungo-e-casuale",
+        "X-Azure-DevOps-Org": "my-org",
+        "X-Azure-DevOps-PAT": "<il-tuo-pat>"
+      }
+    }
+  }
+}
+```
+Per i client solo stdio usa il bridge: `npx -y mcp-remote http://localhost:8080/mcp --header "Authorization: Bearer un-segreto-lungo-e-casuale"`.
+
+> [!CAUTION]
+> Non esporre mai l'endpoint HTTP su una rete pubblica senza autenticazione e HTTPS (reverse proxy).
 
 ---
 
 ### Test di Autovalutazione
-Per verificare il corretto funzionamento dei moduli interni (parsing degli URL, crittografia locale, ricerca nel database offline), puoi eseguire la suite di test integrata:
+Per verificare il corretto funzionamento dei moduli interni (parsing degli URL, crittografia locale, configuration store, ricerca nel database offline), puoi eseguire la suite di test integrata:
 ```bash
 npm run test
 ```
 
 > [!IMPORTANT]
-> La suite di test in `src/test.ts` utilizza l'organizzazione fittizia `my-org`. Prima di eseguire i test, è necessario sostituire le occorrenze di `my-org` in `src/test.ts` con il nome reale della tua organizzazione Azure DevOps, altrimenti i test del parser URL e del configuration store falliranno.
+> I test sono autonomi (organizzazioni fittizie `my-org` / `anotherorg`, token finti): non è necessario modificare `src/test.ts`. Il test del configuration store scrive queste voci fittizie nel file locale `.azure-devops-config.enc`: se contiene già credenziali reali, fanne prima una copia di backup.
 
 #### Configurazione dell'Ambiente di Test / Creazione dei Dati di Test
 Per testare gli strumenti MCP di Azure DevOps (Work Item, Git, Pipeline e Identità), puoi configurare un ambiente sandbox dedicato:
