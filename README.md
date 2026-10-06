@@ -1,5 +1,5 @@
 # Azure DevOps MCP Server
-**Latest Release:** `v1.1.0`
+**Latest Release:** `v1.1.1`
 
 [![smithery badge](https://smithery.ai/badge/github-y8ge/mcp-azure-devops)](https://smithery.ai/servers/github-y8ge/mcp-azure-devops)
 
@@ -154,8 +154,8 @@ Add the server to your client's MCP configuration. Example for **Claude Desktop*
 
 *Note: replace the path with the absolute path of the cloned repository (on macOS/Linux e.g. `/Users/<you>/MCP-for-AZURE-Devops/dist/index.js`). The same `command` + `args` block works in other stdio clients (Antigravity, Cursor, VS Code, …).*
 
-> [!WARNING]
-> On **macOS/Linux** the process also opens the HTTP listener on port `8080` by default (on Windows only when a port is set). If the machine is reachable from other hosts, set `MCP_AUTH_TOKEN` in the client's `env` block or firewall the port.
+> [!NOTE]
+> On **macOS/Linux** the process also opens the HTTP listener on port `8080` by default (on Windows only when a port is set). It listens on `127.0.0.1` only, so it is not reachable from other machines.
 
 ---
 
@@ -164,6 +164,8 @@ Add the server to your client's MCP configuration. Example for **Claude Desktop*
 The server can also expose its tools over HTTP, so that one instance can be shared by several clients or run in a container. Full guide: [Remote HTTP Mode (wiki)](https://github.com/varnierg/MCP-for-AZURE-Devops/wiki/Remote-HTTP-Mode).
 
 **Start**: `node dist/index.js --port 8080` (or `PORT` / `MCP_PORT`; Linux/macOS and containers default to `8080`). The stdio transport stays active too.
+
+**Listen address**: `127.0.0.1` by default (local clients only). To accept connections from other machines use `--host 0.0.0.0` or `MCP_HOST=0.0.0.0` (the Docker image already sets it), and enable authentication.
 
 | Endpoint | Purpose |
 |---|---|
@@ -385,8 +387,8 @@ Aggiungi il server alla configurazione MCP del tuo client. Esempio per **Claude 
 
 *Nota: sostituisci il percorso con quello assoluto del repository clonato (su macOS/Linux ad es. `/Users/<utente>/MCP-for-AZURE-Devops/dist/index.js`). Lo stesso blocco `command` + `args` funziona anche negli altri client stdio (Antigravity, Cursor, VS Code, …).*
 
-> [!WARNING]
-> Su **macOS/Linux** il processo apre per impostazione predefinita anche il listener HTTP sulla porta `8080` (su Windows solo se la porta è impostata). Se la macchina è raggiungibile da altri host, imposta `MCP_AUTH_TOKEN` nel blocco `env` del client oppure blocca la porta con il firewall.
+> [!NOTE]
+> Su **macOS/Linux** il processo apre per impostazione predefinita anche il listener HTTP sulla porta `8080` (su Windows solo se la porta è impostata). Il listener è in ascolto solo su `127.0.0.1`, quindi non è raggiungibile da altre macchine.
 
 ---
 
@@ -395,6 +397,8 @@ Aggiungi il server alla configurazione MCP del tuo client. Esempio per **Claude 
 Il server può esporre gli stessi strumenti anche via HTTP, così un'unica istanza può essere condivisa da più client o eseguita in un container. Guida completa (in inglese): [Remote HTTP Mode (wiki)](https://github.com/varnierg/MCP-for-AZURE-Devops/wiki/Remote-HTTP-Mode).
 
 **Avvio**: `node dist/index.js --port 8080` (oppure `PORT` / `MCP_PORT`; su Linux/macOS e nei container la porta predefinita è `8080`). Il trasporto stdio resta comunque attivo.
+
+**Indirizzo di ascolto**: `127.0.0.1` per impostazione predefinita (solo client locali). Per accettare connessioni da altre macchine usa `--host 0.0.0.0` o `MCP_HOST=0.0.0.0` (l'immagine Docker lo imposta già) e attiva l'autenticazione.
 
 | Endpoint | Scopo |
 |---|---|

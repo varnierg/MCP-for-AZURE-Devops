@@ -109,8 +109,8 @@ On macOS/Linux use a path such as `/Users/<you>/MCP-for-AZURE-Devops/dist/index.
 > [!IMPORTANT]
 > Replace the path with the absolute path of the folder where you cloned the repository.
 
-> [!WARNING]
-> On **macOS/Linux** the process also opens the HTTP listener on port `8080` by default (on Windows only when a port is set). If the machine is reachable from other hosts, set `MCP_AUTH_TOKEN` in the client's `env` block or firewall the port. See [Remote HTTP Mode](Remote-HTTP-Mode).
+> [!NOTE]
+> On **macOS/Linux** the process also opens the HTTP listener on port `8080` by default (on Windows only when a port is set). It listens on `127.0.0.1` only, so it is not reachable from other machines. See [Remote HTTP Mode](Remote-HTTP-Mode).
 
 Credentials can optionally be passed at startup instead of being stored: arguments `--org`, `--username`, `--pat`, `--project`, or environment variables `AZURE_DEVOPS_ORG`, `AZURE_DEVOPS_USERNAME`, `AZURE_DEVOPS_PAT`, `AZURE_DEVOPS_PROJECT`.
 

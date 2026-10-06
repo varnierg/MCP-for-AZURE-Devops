@@ -32,6 +32,8 @@ COPY --chown=node:node .well-known ./.well-known
 # Set Node production environment
 ENV NODE_ENV=production
 ENV PORT=8080
+# Inside the container listen on all interfaces (the server defaults to 127.0.0.1)
+ENV MCP_HOST=0.0.0.0
 
 # Streamable HTTP at /mcp, legacy SSE at /sse
 EXPOSE 8080

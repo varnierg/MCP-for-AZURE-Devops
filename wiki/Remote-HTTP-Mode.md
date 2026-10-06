@@ -18,8 +18,14 @@ node dist/index.js --port 8080
 
 Port resolution order: `--port <n>` → `PORT` → `MCP_PORT`.
 
+**Listen address**: `127.0.0.1` by default, so only clients on the same machine can connect. To accept connections from other machines (or inside a container) set `--host 0.0.0.0` or `MCP_HOST=0.0.0.0`, and **always enable authentication** in that case:
+
+```bash
+node dist/index.js --port 8080 --host 0.0.0.0 --auth-token a-long-random-secret
+```
+
 > [!NOTE]
-> On **Windows** the HTTP listener only starts when a port is set explicitly. On **Linux/macOS (and inside containers)** it defaults to port `8080` when no port is set. The stdio transport is always active as well, so the same process can still be used by a local stdio client.
+> On **Windows** the HTTP listener only starts when a port is set explicitly. On **Linux/macOS (and inside containers)** it defaults to port `8080` when no port is set, still bound to `127.0.0.1` unless `MCP_HOST` / `--host` says otherwise. The stdio transport is always active as well, so the same process can still be used by a local stdio client.
 
 ### Exposed endpoints
 
@@ -77,7 +83,7 @@ Streamable HTTP sessions idle for more than **30 minutes** are dropped together 
 
 ## 🐳 4. Running with Docker (local)
 
-The repository contains a multi-stage `Dockerfile` (Node 22, runs as the unprivileged `node` user, listens on `8080`):
+The repository contains a multi-stage `Dockerfile` (Node 22, runs as the unprivileged `node` user, listens on `0.0.0.0:8080` inside the container via `MCP_HOST=0.0.0.0`):
 
 ```bash
 docker build -t mcp-azure-devops .

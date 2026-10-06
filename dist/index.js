@@ -44936,7 +44936,7 @@ function createServer3(ctx) {
   const server = new Server(
     {
       name: "mcp-azure-devops",
-      version: "1.1.0"
+      version: "1.1.1"
     },
     {
       capabilities: {
@@ -45071,6 +45071,7 @@ async function main() {
   console.error("[Azure DevOps MCP Server] Server running on stdio transport.");
   if (portStr) {
     const port = parseInt(portStr, 10);
+    const host = getArgValue("--host") || process.env.MCP_HOST || "127.0.0.1";
     const authToken = getArgValue("--auth-token") || process.env.MCP_AUTH_TOKEN || void 0;
     const entraTenantId = getArgValue("--tenant-id") || process.env.ENTRA_TENANT_ID || process.env.AZURE_TENANT_ID || void 0;
     const entraClientId = getArgValue("--client-id") || process.env.ENTRA_CLIENT_ID || process.env.AZURE_CLIENT_ID || void 0;
@@ -45296,12 +45297,12 @@ async function main() {
       console.error("[Azure DevOps MCP Server] HTTP server error:", err);
     });
     try {
-      httpServer.listen(port, "0.0.0.0", () => {
+      httpServer.listen(port, host, () => {
         const modes = [
           authCfg.entraTenantId || authCfg.entraClientId ? `Microsoft Entra ID (tenant=${authCfg.entraTenantId || "common"})` : "",
           authCfg.staticToken ? "Bearer token" : ""
         ].filter(Boolean).join(" + ");
-        console.error(`[Azure DevOps MCP Server] HTTP listening on port ${port}: Streamable HTTP at /mcp, legacy SSE at /sse` + (modes ? ` [Auth: ${modes}, RateLimit: >5 fails/10m -> 30m lockout].` : " [Open discovery mode]."));
+        console.error(`[Azure DevOps MCP Server] HTTP listening on ${host}:${port}: Streamable HTTP at /mcp, legacy SSE at /sse` + (modes ? ` [Auth: ${modes}, RateLimit: >5 fails/10m -> 30m lockout].` : " [Open discovery mode]."));
       });
     } catch (err) {
       console.error("[Azure DevOps MCP Server] Failed to bind HTTP server to port:", err);
