@@ -36239,8 +36239,31 @@ var fs2 = __toESM(require("fs"));
 // src/requestContext.ts
 var import_async_hooks = require("async_hooks");
 var requestContext = new import_async_hooks.AsyncLocalStorage();
-function createRemoteContext() {
-  return { remote: true, creds: {} };
+var userCredentialStore = /* @__PURE__ */ new Map();
+var USER_STORE_TTL_MS = 12 * 60 * 60 * 1e3;
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of userCredentialStore) {
+    if (now - v.updatedAt > USER_STORE_TTL_MS) {
+      userCredentialStore.delete(k);
+    }
+  }
+}, 15 * 60 * 1e3).unref();
+function createRemoteContext(userKey) {
+  const stored = userKey ? userCredentialStore.get(userKey) : void 0;
+  if (stored) {
+    stored.updatedAt = Date.now();
+  }
+  return {
+    remote: true,
+    userKey,
+    creds: stored ? { ...stored.creds } : {}
+  };
+}
+function saveUserCredentials(userKey, creds) {
+  if (!userKey)
+    return;
+  userCredentialStore.set(userKey, { creds: { ...creds }, updatedAt: Date.now() });
 }
 var firstHeader = (req, name) => {
   const v = req.headers[name.toLowerCase()];
@@ -36258,8 +36281,10 @@ function extractCredentials(req, query) {
       out.organization = org;
     if (username)
       out.username = username;
-    if (pat)
+    if (pat) {
       out.pat = pat;
+      out.explicitPat = true;
+    }
     if (project)
       out.project = project;
   };
@@ -36283,6 +36308,9 @@ function mergeCredentials(target, incoming) {
   for (const key of ["organization", "username", "pat", "project"]) {
     if (incoming[key])
       target[key] = incoming[key];
+  }
+  if (incoming.explicitPat) {
+    target.explicitPat = true;
   }
 }
 
@@ -43103,7 +43131,7 @@ var import_crypto3 = require("crypto");
 var server_card_default = {
   serverInfo: {
     name: "mcp-azure-devops",
-    version: "1.1.1"
+    version: "1.1.2"
   },
   tools: [
     {
@@ -44178,15 +44206,15 @@ process.on("unhandledRejection", (reason, promise) => {
 var TOOLS = [
   {
     name: "connection_configure",
-    description: "Configures Azure DevOps credentials (Username & PAT) for a specific organization/project URL. Must be called first if not configured.",
+    description: "Configures Azure DevOps credentials (Username & PAT) or sets the target organization/project URL for the current authenticated user. Must be called first if not configured.",
     inputSchema: {
       type: "object",
       properties: {
         url: { type: "string", description: "The project or dashboard URL (e.g. https://dev.azure.com/my-org/Test)" },
-        username: { type: "string", description: "Your username or email" },
-        token: { type: "string", description: "Your Personal Access Token (PAT)" }
+        username: { type: "string", description: "Your username or email (optional when authenticated via Microsoft OAuth)" },
+        token: { type: "string", description: "Your Personal Access Token (PAT) (optional when authenticated via Microsoft OAuth \u2014 omit to use your Microsoft OAuth session, or provide a PAT to connect as a different DevOps user)" }
       },
-      required: ["url", "username", "token"]
+      required: ["url"]
     },
     outputSchema: {
       type: "object",
@@ -44780,18 +44808,29 @@ var handleCallTool = async (request) => {
         const parsed2 = parseProjectUrl(url2);
         ctx.creds.organization = parsed2.organization;
         ctx.creds.project = parsed2.project || ctx.creds.project;
-        ctx.creds.username = username || "";
-        ctx.creds.pat = token;
+        if (typeof username === "string" && username.trim() !== "") {
+          ctx.creds.username = username.trim();
+        }
+        const cleanToken = typeof token === "string" ? token.trim() : "";
+        const isPlaceholder = !cleanToken || ["oauth", "entra", "microsoft", "bearer", "session", "default", "none"].includes(cleanToken.toLowerCase());
+        if (!isPlaceholder) {
+          ctx.creds.pat = cleanToken;
+          ctx.creds.explicitPat = true;
+        }
+        saveUserCredentials(ctx.userKey, ctx.creds);
+        const authMode = ctx.creds.explicitPat ? "custom PAT" : "Microsoft OAuth session";
         return {
           content: [{
             type: "text",
-            text: `Credentials stored for this session only. Organization: "${parsed2.organization}"` + (parsed2.project ? `, project: "${parsed2.project}"` : "")
+            text: `Credentials stored in memory for user session (${authMode}). Organization: "${parsed2.organization}"` + (parsed2.project ? `, project: "${parsed2.project}"` : "")
           }]
         };
       }
-      const parsed = addProjectConfig(url2, username, token);
-      checkAndUpdateDatabase(parsed.organization, token).catch(() => {
-      });
+      const parsed = addProjectConfig(url2, username || "", token || "");
+      if (token) {
+        checkAndUpdateDatabase(parsed.organization, token).catch(() => {
+        });
+      }
       return {
         content: [{
           type: "text",
@@ -44996,7 +45035,7 @@ function createServer3(ctx) {
   const server = new Server(
     {
       name: "mcp-azure-devops",
-      version: "1.1.2"
+      version: "1.1.3"
     },
     {
       capabilities: {
@@ -45233,20 +45272,28 @@ async function main() {
         }
         clearAuthFailures(clientIp);
       }
+      const authHeaderRaw = Array.isArray(req.headers["authorization"]) ? req.headers["authorization"][0] : req.headers["authorization"];
+      const userKey = authResult.userPrincipalName ? `entra:${authResult.userPrincipalName.toLowerCase()}` : authHeaderRaw ? `bearer:${(0, import_crypto3.createHash)("sha256").update(authHeaderRaw).digest("hex").slice(0, 16)}` : void 0;
       const applyRequestCreds = (targetCtx) => {
+        if (!targetCtx.userKey && userKey) {
+          targetCtx.userKey = userKey;
+        }
         const incomingCreds = extractCredentials(req, query);
         mergeCredentials(targetCtx.creds, incomingCreds);
-        if (authResult.entraAccessToken && !incomingCreds.pat) {
+        if (authResult.entraAccessToken && !incomingCreds.pat && !targetCtx.creds.explicitPat) {
           targetCtx.creds.pat = authResult.entraAccessToken;
           if (authResult.userPrincipalName && !targetCtx.creds.username) {
             targetCtx.creds.username = authResult.userPrincipalName;
           }
-          if (!targetCtx.creds.organization && (process.env.AZURE_DEVOPS_ORG || process.env.AZURE_DEVOPS_ORGANIZATION)) {
-            targetCtx.creds.organization = process.env.AZURE_DEVOPS_ORG || process.env.AZURE_DEVOPS_ORGANIZATION;
-          }
-          if (!targetCtx.creds.project && process.env.AZURE_DEVOPS_PROJECT) {
-            targetCtx.creds.project = process.env.AZURE_DEVOPS_PROJECT;
-          }
+        }
+        if (!targetCtx.creds.organization && (process.env.AZURE_DEVOPS_ORG || process.env.AZURE_DEVOPS_ORGANIZATION)) {
+          targetCtx.creds.organization = process.env.AZURE_DEVOPS_ORG || process.env.AZURE_DEVOPS_ORGANIZATION;
+        }
+        if (!targetCtx.creds.project && process.env.AZURE_DEVOPS_PROJECT) {
+          targetCtx.creds.project = process.env.AZURE_DEVOPS_PROJECT;
+        }
+        if (incomingCreds.organization || incomingCreds.project || incomingCreds.pat || incomingCreds.username) {
+          saveUserCredentials(targetCtx.userKey, targetCtx.creds);
         }
       };
       if (isMcpPath) {
@@ -45263,21 +45310,38 @@ async function main() {
             }
             if (sessionId) {
               const session = httpSessions.get(sessionId);
-              if (!session) {
-                sendJsonRpcError(res, 404, -32001, "Session not found");
+              if (session) {
+                session.lastSeen = Date.now();
+                applyRequestCreds(session.ctx);
+                await session.transport.handleRequest(req, res, body);
                 return;
               }
-              session.lastSeen = Date.now();
-              applyRequestCreds(session.ctx);
-              await session.transport.handleRequest(req, res, body);
-              return;
+              const isInitForMissing = Array.isArray(body) ? body.some((m) => isInitializeRequest(m)) : isInitializeRequest(body);
+              if (!isInitForMissing) {
+                const ctx2 = createRemoteContext(userKey);
+                applyRequestCreds(ctx2);
+                const serverInstance2 = createServer3(ctx2);
+                const statelessTransport = new StreamableHTTPServerTransport({
+                  sessionIdGenerator: void 0
+                });
+                await serverInstance2.connect(statelessTransport);
+                await statelessTransport.handleRequest(req, res, body);
+                return;
+              }
             }
             const isInit = Array.isArray(body) ? body.some((m) => isInitializeRequest(m)) : isInitializeRequest(body);
             if (!isInit) {
-              sendJsonRpcError(res, 400, -32e3, "Bad Request: missing Mcp-Session-Id header (send initialize first)");
+              const ctx2 = createRemoteContext(userKey);
+              applyRequestCreds(ctx2);
+              const serverInstance2 = createServer3(ctx2);
+              const statelessTransport = new StreamableHTTPServerTransport({
+                sessionIdGenerator: void 0
+              });
+              await serverInstance2.connect(statelessTransport);
+              await statelessTransport.handleRequest(req, res, body);
               return;
             }
-            const ctx = createRemoteContext();
+            const ctx = createRemoteContext(userKey);
             applyRequestCreds(ctx);
             const serverInstance = createServer3(ctx);
             const transport = new StreamableHTTPServerTransport({
@@ -45302,6 +45366,11 @@ async function main() {
                 res.end(JSON.stringify({ jsonrpc: "2.0", error: { code: -32e3, message: "Method not allowed without Mcp-Session-Id. Use POST to initialize." }, id: null }));
                 return;
               }
+              if (req.method === "DELETE") {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(JSON.stringify({ status: "ok" }));
+                return;
+              }
               sendJsonRpcError(res, sessionId ? 404 : 400, -32001, sessionId ? "Session not found" : "Missing Mcp-Session-Id header");
               return;
             }
@@ -45322,7 +45391,7 @@ async function main() {
       }
       if (isSsePath) {
         const transport = new PrefixSafeSSEServerTransport("messages", res, req);
-        const ctx = createRemoteContext();
+        const ctx = createRemoteContext(userKey);
         applyRequestCreds(ctx);
         const serverInstance = createServer3(ctx);
         transports.set(transport.sessionId, { transport, server: serverInstance, ctx });

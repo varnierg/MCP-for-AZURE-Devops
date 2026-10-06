@@ -22,13 +22,13 @@ This page lists all **23 tools** exposed by the Azure DevOps MCP server, grouped
 ## 1. Configuration & Connection
 
 ### `connection_configure`
-Configures and encrypts Azure DevOps credentials (Username & Personal Access Token) for a specific organization/project URL. Must be called before other tools if no prior configuration exists.
+Configures Azure DevOps credentials (Username & Personal Access Token) or sets the target organization/project URL for the current authenticated user. Must be called before other tools if no prior configuration exists.
 * **Parameters**:
   * `url` (string, **required**): The project or dashboard URL (e.g. `https://dev.azure.com/my-org/Test`).
-  * `username` (string, **required**): Your username or email.
-  * `token` (string, **required**): Your Personal Access Token (PAT).
-* **Output**: A success message indicating that configuration was encrypted and saved.
-* **Remote HTTP mode**: credentials are kept in memory for the current MCP session only and are never written to disk (see [Remote HTTP Mode](Remote-HTTP-Mode)).
+  * `username` (string, optional when authenticated via Microsoft OAuth): Your username or email.
+  * `token` (string, optional when authenticated via Microsoft OAuth): Your Personal Access Token (PAT). Omit to use your Microsoft OAuth session, or provide a PAT to connect as a different DevOps user.
+* **Output**: A success message indicating that configuration was saved.
+* **Remote HTTP mode**: credentials are kept in memory for the current MCP session / authenticated user only (12-hour TTL for authenticated users across stateless tool calls) and are never written to disk (see [Remote HTTP Mode](Remote-HTTP-Mode)).
 
 ### `connection_test`
 Verifies connection to Azure DevOps for a configured organization.

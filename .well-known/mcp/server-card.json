@@ -1,12 +1,12 @@
 {
   "serverInfo": {
     "name": "mcp-azure-devops",
-    "version": "1.1.2"
+    "version": "1.1.3"
   },
   "tools": [
     {
       "name": "connection_configure",
-      "description": "Configures Azure DevOps credentials (Username & PAT) for a specific organization/project URL. Must be called first if not configured.",
+      "description": "Configures Azure DevOps credentials (Username & PAT) or sets the target organization/project URL for the current authenticated user. Must be called first if not configured.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -16,17 +16,15 @@
           },
           "username": {
             "type": "string",
-            "description": "Your username or email"
+            "description": "Your username or email (optional when authenticated via Microsoft OAuth)"
           },
           "token": {
             "type": "string",
-            "description": "Your Personal Access Token (PAT)"
+            "description": "Your Personal Access Token (PAT) (optional when authenticated via Microsoft OAuth — omit to use your Microsoft OAuth session, or provide a PAT to connect as a different DevOps user)"
           }
         },
         "required": [
-          "url",
-          "username",
-          "token"
+          "url"
         ]
       },
       "outputSchema": {

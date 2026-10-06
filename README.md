@@ -1,5 +1,5 @@
 # Azure DevOps MCP Server
-**Latest Release:** `v1.1.2`
+**Latest Release:** `v1.1.3`
 
 [![smithery badge](https://smithery.ai/badge/github-y8ge/mcp-azure-devops)](https://smithery.ai/servers/github-y8ge/mcp-azure-devops)
 
@@ -188,7 +188,7 @@ The server can also expose its tools over HTTP, so that one instance can be shar
 Without any of them the server runs in **open mode** (only for localhost/testing). More than 5 failed authentication attempts (with an invalid `Authorization` header) from an IP within 10 minutes lock that IP out for 30 minutes; unauthenticated OAuth discovery probes return `401 WWW-Authenticate` without counting toward the lockout. An Entra ID token issued for Azure DevOps is also used to call Azure DevOps on behalf of the user, so no PAT is needed.
 
 **Azure DevOps credentials**:
-- **Per session (multi-user)**: headers `X-Azure-DevOps-Org`, `X-Azure-DevOps-PAT`, `X-Azure-DevOps-Username`, `X-Azure-DevOps-Project` (recommended), or query parameters `organization`, `pat`, … / `config=<base64 JSON>` (Smithery format). `connection_configure` keeps credentials **in memory for that session only**, never on disk. Sessions idle for more than 30 minutes are dropped.
+- **Per session / per authenticated user (multi-user)**: headers `X-Azure-DevOps-Org`, `X-Azure-DevOps-PAT`, `X-Azure-DevOps-Username`, `X-Azure-DevOps-Project` (recommended), or query parameters `organization`, `pat`, … / `config=<base64 JSON>` (Smithery format). `connection_configure` keeps credentials **in memory only** (never on disk); when signed in via Microsoft OAuth, only `url` is required (omit `token` to use your OAuth session, or pass a custom PAT to connect as a different DevOps user). For authenticated requests (Microsoft Entra ID UPN or Bearer token), in-memory credentials also persist per authenticated user (12-hour TTL) so stateless HTTP MCP clients that open a new session per tool call retain their configured organization/project. Idle `Mcp-Session-Id` transports are dropped after 30 minutes.
 - **Server-wide (single user)**: `AZURE_DEVOPS_ORG`, `AZURE_DEVOPS_PAT`, `AZURE_DEVOPS_USERNAME`, `AZURE_DEVOPS_PROJECT`. In this case authentication is **mandatory**.
 
 **Docker (local)**:
@@ -423,7 +423,7 @@ Il server può esporre gli stessi strumenti anche via HTTP, così un'unica istan
 Senza nessuna di queste opzioni il server funziona in **modalità aperta** (solo per localhost/test). Più di 5 tentativi di autenticazione falliti (con un header `Authorization` non valido) da uno stesso IP in 10 minuti bloccano quell'IP per 30 minuti; le sonde di discovery OAuth prive di autenticazione restituiscono `401 WWW-Authenticate` senza essere conteggiate nel blocco. Un token Entra ID emesso per Azure DevOps viene usato anche per chiamare Azure DevOps per conto dell'utente, senza bisogno di PAT.
 
 **Credenziali Azure DevOps**:
-- **Per sessione (multi-utente)**: header `X-Azure-DevOps-Org`, `X-Azure-DevOps-PAT`, `X-Azure-DevOps-Username`, `X-Azure-DevOps-Project` (consigliati), oppure parametri query `organization`, `pat`, … / `config=<JSON base64>` (formato Smithery). `connection_configure` mantiene le credenziali **solo in memoria per quella sessione**, mai su disco. Le sessioni inattive da più di 30 minuti vengono eliminate.
+- **Per sessione / per utente autenticato (multi-utente)**: header `X-Azure-DevOps-Org`, `X-Azure-DevOps-PAT`, `X-Azure-DevOps-Username`, `X-Azure-DevOps-Project` (consigliati), oppure parametri query `organization`, `pat`, … / `config=<JSON base64>` (formato Smithery). `connection_configure` mantiene le credenziali **solo in memoria** (mai su disco); quando si accede tramite Microsoft OAuth è sufficiente passare `url` (ometti `token` per usare la sessione OAuth, oppure fornisci un PAT personalizzato per connetterti con un'altra utenza DevOps). Per le richieste autenticate (UPN Microsoft Entra ID o Bearer token), le credenziali in memoria vengono inoltre mantenute per singolo utente autenticato (TTL di 12 ore), così i client MCP HTTP stateless che aprono una nuova sessione per ogni chiamata agli strumenti mantengono organizzazione e progetto configurati. Le sessioni `Mcp-Session-Id` inattive da più di 30 minuti vengono eliminate.
 - **Globali (utente singolo)**: `AZURE_DEVOPS_ORG`, `AZURE_DEVOPS_PAT`, `AZURE_DEVOPS_USERNAME`, `AZURE_DEVOPS_PROJECT`. In questo caso l'autenticazione è **obbligatoria**.
 
 **Docker (locale)**:

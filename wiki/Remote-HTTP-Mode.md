@@ -67,19 +67,22 @@ If **none** of them is set, the server starts in **open mode** (and logs a warni
 
 ## 🔑 3. Azure DevOps credentials in HTTP mode
 
-Credentials are resolved per MCP session, in this order of preference:
+Credentials are resolved per MCP session (and per authenticated user), in this order of preference:
 
-1. **Per-session credentials** sent by the client (multi-user):
+1. **Per-session / per-authenticated-user credentials** sent by the client (multi-user):
    - **Headers (recommended)**: `X-Azure-DevOps-Org`, `X-Azure-DevOps-PAT`, `X-Azure-DevOps-Username` (optional), `X-Azure-DevOps-Project` (optional).
    - Query parameters `organization`, `pat`, `username`, `defaultProject`, or `config=<base64 JSON>` (Smithery format). Avoid them when possible: query strings can end up in proxy/access logs.
-   - The `connection_configure` tool: in HTTP mode credentials are kept **in memory for that session only** and are **never written to disk**.
+   - The `connection_configure` tool: in HTTP mode credentials are kept **in memory only** and are **never written to disk**. When signed in via Microsoft Entra ID OAuth, only `url` is required (`username` and `token` are optional — omit `token` to use your Microsoft OAuth session, or provide a custom PAT to override the OAuth identity and connect as a different DevOps user).
    - A Microsoft Entra ID token for Azure DevOps (see above).
 2. **Server-wide credentials** (single-user deployment): `AZURE_DEVOPS_ORG`, `AZURE_DEVOPS_PAT`, `AZURE_DEVOPS_USERNAME`, `AZURE_DEVOPS_PROJECT` (or the flags `--org`, `--pat`, `--username`, `--project`).
 
 > [!WARNING]
 > If you set server-wide credentials, **always** enable `MCP_AUTH_TOKEN` or Entra ID: otherwise anyone reaching the endpoint can use your PAT.
 
-Streamable HTTP sessions idle for more than **30 minutes** are dropped together with their in-memory credentials. The client simply re-initializes.
+**Stateless HTTP clients & session lifecycle**:
+- For authenticated users (identified by verified Microsoft Entra ID UPN or hashed `Authorization: Bearer` token), credentials configured via `connection_configure` or headers are kept in an in-memory per-user store (12-hour TTL). This allows stateless MCP HTTP clients—which open a new MCP session or send direct tool calls without reusing `Mcp-Session-Id`—to retain their configured organization, project, and optional custom PAT across tool calls while preserving strict isolation between users.
+- When unauthenticated, credentials remain strictly scoped to the `Mcp-Session-Id` session.
+- Streamable HTTP `Mcp-Session-Id` sessions idle for more than **30 minutes** are dropped. If a client sends a request with an expired/unknown `Mcp-Session-Id` (e.g., after a container restart), the server transparently handles the request using a stateless transport backed by the authenticated user's in-memory context.
 
 ---
 

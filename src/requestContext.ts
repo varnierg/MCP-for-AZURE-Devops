@@ -1,5 +1,5 @@
 // Author Varnier Gatto and Gemini, e-mail: mcp_dev@jitime.com
-// Per-session credential context for remote (HTTP) transports.
+// Per-session and per-authenticated-user credential context for remote (HTTP) transports.
 // In stdio mode there is no context and the classic arg/env/encrypted-file resolution is used.
 import { AsyncLocalStorage } from 'async_hooks';
 import type { IncomingMessage } from 'http';
@@ -9,19 +9,55 @@ export interface SessionCredentials {
   username?: string;
   pat?: string;
   project?: string;
+  /** True when the PAT was explicitly set by the user (e.g. via connection_configure or headers) */
+  explicitPat?: boolean;
 }
 
 export interface RequestContext {
   /** True when the call arrives over a remote HTTP transport (Streamable HTTP or SSE). */
   remote: boolean;
-  /** Credentials scoped to this MCP session only (never written to disk). */
+  /** Authenticated identity key (e.g. Microsoft Entra UPN or hashed Bearer token) for cross-session persistence */
+  userKey?: string;
+  /** Credentials scoped to this MCP session/user (never written to disk). */
   creds: SessionCredentials;
 }
 
 export const requestContext = new AsyncLocalStorage<RequestContext>();
 
-export function createRemoteContext(): RequestContext {
-  return { remote: true, creds: {} };
+/**
+ * In-memory credential store keyed by authenticated user identity (e.g. Microsoft Entra UPN).
+ * Stateless MCP clients like Gemini Online open a new MCP session (`initialize` + `tools/call`)
+ * for every single tool invocation instead of reusing `Mcp-Session-Id`.
+ * Keying by the verified OAuth identity lets `connection_configure` persist across tool calls
+ * for the same authenticated user while keeping strict isolation between different users.
+ */
+const userCredentialStore = new Map<string, { creds: SessionCredentials; updatedAt: number }>();
+const USER_STORE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of userCredentialStore) {
+    if (now - v.updatedAt > USER_STORE_TTL_MS) {
+      userCredentialStore.delete(k);
+    }
+  }
+}, 15 * 60 * 1000).unref();
+
+export function createRemoteContext(userKey?: string): RequestContext {
+  const stored = userKey ? userCredentialStore.get(userKey) : undefined;
+  if (stored) {
+    stored.updatedAt = Date.now();
+  }
+  return {
+    remote: true,
+    userKey,
+    creds: stored ? { ...stored.creds } : {},
+  };
+}
+
+export function saveUserCredentials(userKey: string | undefined, creds: SessionCredentials): void {
+  if (!userKey) return;
+  userCredentialStore.set(userKey, { creds: { ...creds }, updatedAt: Date.now() });
 }
 
 const firstHeader = (req: IncomingMessage, name: string): string | undefined => {
@@ -49,7 +85,10 @@ export function extractCredentials(req: IncomingMessage, query: Record<string, u
     const project = nonEmpty(src.defaultProject) ?? nonEmpty(src.project);
     if (org) out.organization = org;
     if (username) out.username = username;
-    if (pat) out.pat = pat;
+    if (pat) {
+      out.pat = pat;
+      out.explicitPat = true;
+    }
     if (project) out.project = project;
   };
 
@@ -75,5 +114,8 @@ export function extractCredentials(req: IncomingMessage, query: Record<string, u
 export function mergeCredentials(target: SessionCredentials, incoming: SessionCredentials): void {
   for (const key of ['organization', 'username', 'pat', 'project'] as const) {
     if (incoming[key]) target[key] = incoming[key];
+  }
+  if (incoming.explicitPat) {
+    target.explicitPat = true;
   }
 }
